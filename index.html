@@ -655,11 +655,23 @@ a { color: inherit; }
   }
   let suppress = false, supT = null, scrollRaf = null;
   const rhH = () => ($('.rh')?.offsetHeight || 0);
-  let userScroll = 0;
-  ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(ev => $('#panel').addEventListener(ev, () => { userScroll = Date.now(); }, { passive: true }));
-  $('#panel').addEventListener('scroll', () => {
-    if (view !== 'roteiro' || suppress || scrollRaf || Date.now() - userScroll > 700) return;
-    scrollRaf = requestAnimationFrame(() => { scrollRaf = null; const panel = $('#panel'), line = panel.scrollTop + rhH() + 24; let win = 0; panel.querySelectorAll('.day').forEach((d, i) => { if (d.offsetTop <= line) win = i; }); if (win !== dayIdx) selectDay(win, { fromScroll: true }); });
+  /* dia ativo segue o ponteiro: o dia sob o cursor manda no mapa (ao passar o mouse ou ao rolar com o cursor parado).
+     Enquanto o cursor estiver dentro de um dia, o mapa fica travado nele. Sem ponteiro (toque) vale a linha de leitura sob o cabeçalho. */
+  const panelEl = $('#panel');
+  let ptr = null, hoverT = null, userScroll = 0;
+  const dayAt = (x, y) => { const el = document.elementFromPoint(x, y)?.closest('.day'); return el ? +el.dataset.i : -1; };
+  const follow = (i) => { clearTimeout(hoverT); if (i < 0 || i === dayIdx) return; hoverT = setTimeout(() => { if (view === 'roteiro' && !suppress && i !== dayIdx) selectDay(i, { fromScroll: true }); }, 90); };
+  panelEl.addEventListener('pointermove', (e) => { if (e.pointerType !== 'mouse') return; ptr = { x: e.clientX, y: e.clientY }; if (view === 'roteiro' && !suppress) follow(dayAt(ptr.x, ptr.y)); });
+  panelEl.addEventListener('pointerleave', () => { ptr = null; clearTimeout(hoverT); });
+  ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(ev => panelEl.addEventListener(ev, () => { userScroll = Date.now(); }, { passive: true }));
+  panelEl.addEventListener('scroll', () => {
+    if (view !== 'roteiro' || suppress || scrollRaf) return;
+    scrollRaf = requestAnimationFrame(() => {
+      scrollRaf = null;
+      if (ptr) { follow(dayAt(ptr.x, ptr.y)); return; }
+      if (Date.now() - userScroll > 700) return;
+      const line = panelEl.scrollTop + rhH() + 24; let win = 0; panelEl.querySelectorAll('.day').forEach((d, i) => { if (d.offsetTop <= line) win = i; }); if (win !== dayIdx) selectDay(win, { fromScroll: true });
+    });
   }, { passive: true });
 
   /* ---------- guia (Wikipédia) ---------- */

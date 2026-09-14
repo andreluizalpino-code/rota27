@@ -543,13 +543,11 @@ a { color: inherit; }
     let li = 0;
     const legs = r.legs;
     r.stops.forEach((s, si) => {
+      /* deslocamentos até a base = trechos até o primeiro que chega nela (esse entra sempre como principal, mesmo anotado);
+         trechos anotados no meio e logo depois são radiais. Sem trecho que chegue na base, nada é consumido. */
       const chain = [], sides = [];
-      while (li < legs.length) {
-        const L = legs[li];
-        if (L.note) { sides.push(L); li++; continue; }
-        chain.push(L); li++;
-        if (L.to === s.place) break;
-      }
+      const end = legs.findIndex((L, i) => i >= li && L.to === s.place);
+      if (end >= 0) for (; li <= end; li++) (legs[li].note && li !== end ? sides : chain).push(legs[li]);
       while (li < legs.length && legs[li].note) { sides.push(legs[li]); li++; }
       const first = dnum(s.in), last = dnum(s.out);
       const dated = {}, generic = [];

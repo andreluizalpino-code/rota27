@@ -133,15 +133,18 @@ a { color: inherit; }
 .critbox__t { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; line-height: 1.1; }
 .critbox__t .score { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; background: var(--rc); color: #fff; border-radius: 999px; padding: 3px 11px; font-size: var(--fs-label); flex: none; }
 .critbox__why { font-size: var(--fs-sec); color: var(--ink); line-height: 1.5; padding-left: 12px; border-left: 3px solid var(--rc); }
-.critbox__b { flex: 1; min-height: 0; overflow: auto; padding: 14px 16px 16px; display: grid; gap: 12px; align-content: start; scrollbar-width: thin; }
-.critbox--wide .critbox__b { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); align-content: stretch; }
-.frame { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.critbox__b { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 14px 16px 16px; display: grid; grid-auto-rows: max-content; gap: 12px; align-content: start; }
+.critbox__b::-webkit-scrollbar { width: 12px; }
+.critbox__b::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+.critbox__b::-webkit-scrollbar-thumb:hover { background: var(--ink-3); background-clip: padding-box; }
+.critbox--wide .critbox__b { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.frame { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); overflow: hidden; }
 .frame__img { aspect-ratio: 16/9; background: var(--surface-2); position: relative; flex: none; margin: 0; }
 .frame__img.no-img { background: repeating-linear-gradient(135deg, var(--surface-2) 0 12px, var(--surface-3) 12px 14px); }
 .frame__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .frame__img figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 8px; font-size: var(--fs-label); font-weight: 700; color: #fff; background: linear-gradient(transparent, rgba(16,21,28,.75)); }
 .frame__img figcaption a { color: #fff; font-weight: 500; }
-.frame__b { padding: 10px 12px 12px; display: grid; gap: 6px; align-content: start; min-height: 0; overflow: auto; scrollbar-width: thin; }
+.frame__b { padding: 10px 12px 12px; display: grid; gap: 6px; align-content: start; }
 .frame__t { font-weight: 700; font-size: var(--fs-sec); display: flex; gap: 8px; align-items: center; }
 .frame__x { font-size: var(--fs-sec); color: var(--ink-2); line-height: 1.45; }
 .frame__links { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -320,6 +323,8 @@ a { color: inherit; }
 /* cada critério é um micro-botão: retângulo de hover sem borda; o painel de detalhe abre sobre o mapa */
 .crit__row { display: grid; grid-template-columns: minmax(0, 1fr) 52px 20px; gap: 6px; align-items: center; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); padding: 4px 6px; border-radius: 8px; cursor: default; transition: background var(--ease), color var(--ease); outline: none; }
 .crit__row:hover, .crit__row.is-on, .crit__row:focus-visible { background: color-mix(in srgb, var(--rc) 11%, var(--surface)); color: var(--ink); }
+.crit__row.is-pinned { background: color-mix(in srgb, var(--rc) 16%, var(--surface)); box-shadow: inset 0 0 0 1.5px var(--rc); color: var(--ink); cursor: pointer; }
+.crit__row { cursor: pointer; }
 .crit__row > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .meter { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
 .meter i { display: block; height: 100%; width: calc(var(--v) * 20%); background: var(--rc); border-radius: 999px; }
@@ -629,6 +634,7 @@ a { color: inherit; }
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     map.on('load', () => { mapReady = true; paintMap(); applyVisibility(); buildMarkers(R()); fitRoute(); if (view === 'comparar') { cmpCur = null; const c = cmpCards()[cmpIdx()]; if (c) cmpFocus(c.dataset.route); } else if (dayIdx >= 0) selectDay(dayIdx); });
     map.on('style.load', () => { if (mapReady) paintMap(); });
+    map.on('click', () => { if (view === 'comparar' && critPin) critUnpin(); });
     $('#fitBtn').addEventListener('click', () => fitRoute(view === 'comparar' && cmpCur ? D.routes.find(x => x.id === cmpCur) : R()));
   }
   const arc = (a, b) => {
@@ -778,7 +784,7 @@ a { color: inherit; }
   }
   function setView(v) {
     const fromCmp = view === 'comparar' && v !== 'comparar';
-    if (fromCmp) critClose();
+    if (fromCmp) critUnpin();
     view = v; $('#body').dataset.view = v;
     $('#tabs').querySelectorAll('[role=tab]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.view === v)));
     applyVisibility();
@@ -880,7 +886,7 @@ a { color: inherit; }
   const custoTotal = (c) => custoLinhas(c).reduce((a, l) => [a[0] + l.v[0], a[1] + l.v[1]], [0, 0]);
   /* o total da tabela é a fonte do "em terra" do orçamento — uma verdade só */
   function applyCrit() { D.routes.forEach(r => { const c = critOf(r.id, 'custo'); if (c) { const t = custoTotal(c); r.custoEur = [Math.round(t[0] / 10) * 10, Math.round(t[1] / 10) * 10]; } }); }
-  let crit = null, critT = null, critCamT = null;
+  let crit = null, critT = null, critCamT = null, critPin = null;   // critPin: critério fixado por clique — sobrevive à saída do mouse
   function frameHTML(rid, q) {
     const g = q.place && !q.texto ? guide(rid, q.place) : null, p = q.place ? P[q.place] : null;
     const titulo = q.titulo || (p ? p.n : ''), wiki = q.wiki || (g && g.wiki) || '', texto = q.texto || (g && g.porque) || '', links = q.links || (g && g.links) || [];
@@ -909,6 +915,8 @@ a { color: inherit; }
     if (crit && crit.rid === rid && crit.k === k) return;
     const r = D.routes.find(x => x.id === rid), c = critOf(rid, k), cr = D.criterios.find(x => x.k === k); if (!r || !c || !cr) return;
     crit = { rid, k };
+    document.querySelectorAll('.crit__row.is-on').forEach(e => e.classList.remove('is-on'));
+    document.querySelector(`.card[data-route="${rid}"] .crit__row[data-k="${k}"]`)?.classList.add('is-on');
     const wide = c.modo === 'quadros';
     let body;
     if (k === 'custo') body = custoHTML(r, c);
@@ -934,11 +942,14 @@ a { color: inherit; }
     const places = (c.places || []).filter(p => P[p]);
     setPlaceLabels(places, col(r), { side: 'left', route: r }); labelMarkers.forEach(m => m.getElement().classList.add('is-focus'));
     r.stops.forEach((s, i) => { if (places.includes(s.place)) markers[i + 1]?.getElement().classList.add('is-focus'); });
-    if (wide) return;   // quadros cobrem o mapa: câmera parada
+    if (wide || k === 'custo') return;   // quadros cobrem o mapa e a tabela de custo não tem lugar: câmera parada
     if (!places.length) { fitB(routeBounds(r), { padding: pad, duration: dur, maxZoom: 8 }); return; }
     if (places.length === 1) { const p = P[places[0]]; ease({ center: [p.lng, p.lat], zoom: c.zoom || 9.5, padding: pad, duration: dur }); }
     else { const b = new maplibregl.LngLatBounds(); places.forEach(p => b.extend([P[p].lng, P[p].lat])); fitB(b, { padding: pad, duration: dur, maxZoom: c.zoom || 9.5 }); }
   }
+  /* sair do critério: volta ao fixado (se houver) ou fecha */
+  function critLeave() { clearTimeout(critT); critT = setTimeout(() => { if (critPin) critOpen(critPin.rid, critPin.k); else critClose(); }, 380); }
+  function critUnpin() { critPin = null; document.querySelectorAll('.crit__row.is-pinned').forEach(e => e.classList.remove('is-pinned')); critClose(); }
   function critClose() {
     clearTimeout(critT); clearTimeout(critCamT); if (!crit) return;
     const rid = crit.rid; crit = null;
@@ -949,7 +960,7 @@ a { color: inherit; }
     const r = D.routes.find(x => x.id === rid); if (r && view === 'comparar') fitRoute(r);
   }
   $('#critbox').addEventListener('pointerenter', () => clearTimeout(critT));
-  $('#critbox').addEventListener('pointerleave', () => { clearTimeout(critT); critT = setTimeout(critClose, 380); });
+  $('#critbox').addEventListener('pointerleave', critLeave);
 
   /* ---------- guia (Wikipédia) ---------- */
   const GUIA = () => D.guia || window.ROTA27_GUIA || {};
@@ -1110,9 +1121,14 @@ a { color: inherit; }
       if (view === 'comparar') setTimeout(() => { const c = cmpCards()[cmpIdx()]; if (c) cmpFocus(c.dataset.route, { relight: true }); }, 60);
       el.querySelectorAll('.crit__row').forEach(row => {
         const rid = row.closest('.card').dataset.route, k = row.dataset.k;
-        const on = () => { if (rid !== cmpCur) return; el.querySelectorAll('.crit__row.is-on').forEach(e => e.classList.remove('is-on')); row.classList.add('is-on'); critOpen(rid, k); };
-        const off = () => { clearTimeout(critT); critT = setTimeout(critClose, 380); };
-        row.addEventListener('pointerenter', on); row.addEventListener('pointerleave', off); row.addEventListener('focus', on); row.addEventListener('blur', off);
+        const on = () => { if (rid === cmpCur) critOpen(rid, k); };
+        row.addEventListener('pointerenter', on); row.addEventListener('pointerleave', critLeave); row.addEventListener('focus', on); row.addEventListener('blur', critLeave);
+        row.addEventListener('click', () => {
+          if (rid !== cmpCur) return;
+          if (critPin && critPin.rid === rid && critPin.k === k) { critUnpin(); return; }   // clicar no fixado solta e volta ao mapa da rota
+          critPin = { rid, k }; el.querySelectorAll('.crit__row.is-pinned').forEach(e => e.classList.remove('is-pinned')); row.classList.add('is-pinned'); critOpen(rid, k);
+        });
+        row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); } });
       });
     }
     if (view === 'decidir') {
@@ -1128,7 +1144,7 @@ a { color: inherit; }
   }
   function cmpFocus(id, { relight = false } = {}) {
     const changed = id !== cmpCur; if (!id || (!changed && !relight)) return;
-    const r = D.routes.find(x => x.id === id); if (!r) return; if (changed) critClose(); cmpCur = id;
+    const r = D.routes.find(x => x.id === id); if (!r) return; if (changed) critUnpin(); cmpCur = id;
     hi(id); $('#legend')?.style.setProperty('--rc', col(r));
     $('#routeCard').innerHTML = `<div class="route-card__t"><span class="dot" style="--rc:${col(r)}"></span>${esc(r.nome)} <span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span></div><div class="route-card__s">${esc(r.sub)}</div>`;
     if (mapReady && changed) { buildMarkers(r); fitRoute(r); }

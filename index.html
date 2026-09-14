@@ -143,10 +143,11 @@ a { color: inherit; }
 /* ---------- painel: cabeçalho da rota ---------- */
 .rh { padding: var(--s3) var(--s3) var(--s2); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 3; }
 .rsel { position: relative; }
-.rsel__btn { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px 8px 14px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); text-align: left; }
+.rsel__btn { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px 8px 14px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); text-align: left; }
 .rsel__btn:hover { background: var(--surface-2); }
 .rsel__txt { flex: 1; min-width: 0; }
 .rsel__name, .rsel__sub { display: block; }
+.rsel__sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rsel__name { font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; line-height: 1.1; }
 .rsel__sub { color: var(--ink-2); font-size: var(--fs-label); font-weight: 500; margin-top: 2px; }
 .rsel__chev { margin-left: auto; color: var(--ink-3); transition: transform var(--ease); }
@@ -199,6 +200,24 @@ a { color: inherit; }
 .idea-form { display: grid; gap: 10px; margin-top: 10px; padding: 12px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); }
 .idea-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .idea-form__act { display: flex; gap: 8px; justify-content: flex-end; }
+.guide { margin-top: 12px; display: grid; gap: 10px; }
+.guide__cover { position: relative; border-radius: var(--r); overflow: hidden; background: var(--surface-2); aspect-ratio: 16/9; margin: 0; }
+.guide__cover.no-img { background: repeating-linear-gradient(135deg, var(--surface-2) 0 12px, var(--surface-3) 12px 14px); }
+.guide__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.guide__cover figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 8px; font-size: var(--fs-label); font-weight: 700; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.65)); }
+.guide__cover figcaption a { color: #fff; font-weight: 500; }
+.guide__why { font-size: var(--fs-sec); color: var(--ink); line-height: 1.5; padding-left: 12px; border-left: 3px solid var(--rc); }
+.hl-row { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; margin-right: -16px; padding-right: 16px; scrollbar-width: thin; }
+.hl { flex: 0 0 210px; scroll-snap-align: start; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface); overflow: hidden; text-decoration: none; color: inherit; transition: border-color var(--ease), box-shadow var(--ease); }
+.hl:hover { border-color: var(--rc); box-shadow: var(--shadow); }
+.hl__img { aspect-ratio: 4/3; background: var(--surface-2); object-fit: cover; width: 100%; display: block; }
+.hl__b { padding: 8px 10px 10px; }
+.hl__n { font-weight: 700; font-size: var(--fs-sec); }
+.hl__t { color: var(--ink-2); font-size: var(--fs-label); margin-top: 2px; line-height: 1.35; }
+.hl__x { color: var(--ink-3); font-size: var(--fs-label); margin-top: 6px; line-height: 1.35; min-height: 4.05em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.guide__links { display: flex; gap: 6px; flex-wrap: wrap; }
+.guide__links a { text-decoration: none; }
+.guide__links a:hover { background: var(--surface-3); color: var(--ink); }
 .risks { margin: var(--s2) var(--s3) 0; padding: 12px 14px; border-radius: var(--r); border: 1px dashed var(--line-2); }
 .risks .lbl { color: var(--warn); }
 .risks ul { padding-left: 18px; margin-top: 6px; color: var(--ink-2); font-size: var(--fs-sec); display: grid; gap: 4px; }
@@ -263,7 +282,7 @@ a { color: inherit; }
   .bar__spacer:last-of-type { display: none; }
   .tabs { order: 10; width: 100%; justify-content: space-between; }
   .tabs button { flex: 1; padding: 6px 4px; font-size: var(--fs-label); }
-  .rsel__btn > .chip { display: none; }
+  
   .who__name { display: none; }
   .body, .body[data-view="comparar"] { grid-template-columns: 1fr; grid-template-rows: 1fr; position: relative; }
   .stage { position: absolute; inset: 0; }
@@ -352,6 +371,7 @@ a { color: inherit; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
 <script src="data/config.js"></script>
 <script src="data/routes.js"></script>
+<script src="data/guia.js"></script>
 <script>
 (() => {
   'use strict';
@@ -460,6 +480,7 @@ a { color: inherit; }
     renderWho();
     const fromHash = (location.hash.match(/rota=([a-z]+)/) || [])[1];
     routeId = D.routes.some(r => r.id === fromHash) ? fromHash : D.routes[0].id;
+    setRoute(routeId); setView('roteiro');
     buildMap();
     be.subscribe(async () => { S = await be.loadState(); if (view !== 'roteiro') render(); else renderIdeas(); });
   }
@@ -510,7 +531,7 @@ a { color: inherit; }
   function buildMap() {
     map = new maplibregl.Map({ container: 'map', style: STYLES.light, center: [17.5, 40.6], zoom: 4.6, attributionControl: { compact: true }, cooperativeGestures: false });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    map.on('load', () => { mapReady = true; paintMap(); setRoute(routeId, { keepView: false }); setView('roteiro'); });
+    map.on('load', () => { mapReady = true; paintMap(); applyVisibility(); buildMarkers(R()); fitRoute(); if (view === 'comparar') fitAll(); else if (dayIdx >= 0) selectDay(dayIdx); });
     map.on('style.load', () => { if (mapReady) paintMap(); });
     $('#fitBtn').addEventListener('click', () => fitRoute());
   }
@@ -608,7 +629,6 @@ a { color: inherit; }
   }
   $('#tabs').addEventListener('click', (e) => { const t = e.target.closest('[role=tab]'); if (t) setView(t.dataset.view); });
 
-  let obs = null;
   function selectDay(i, { scroll = false, fromScroll = false } = {}) {
     if (i < 0 || i >= days.length) return;
     const d = days[i], r = R(), c = col(r);
@@ -631,9 +651,48 @@ a { color: inherit; }
         const p = P[d.place]; map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 8.6), padding: pad, duration: dur });
       }
     }
-    if (scroll && !fromScroll) { const el = document.querySelector(`.day[data-i="${i}"]`); if (el) { suppress = true; el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); setTimeout(() => suppress = false, 900); } }
+    if (scroll && !fromScroll) { const el = document.querySelector(`.day[data-i="${i}"]`), panel = $('#panel'); if (el) { suppress = true; clearTimeout(supT); panel.scrollTo({ top: Math.max(0, el.offsetTop - rhH() - 10), behavior: reduced ? 'auto' : 'smooth' }); supT = setTimeout(() => suppress = false, 1100); } }
   }
-  let suppress = false;
+  let suppress = false, supT = null, scrollRaf = null;
+  const rhH = () => ($('.rh')?.offsetHeight || 0);
+  let userScroll = 0;
+  ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(ev => $('#panel').addEventListener(ev, () => { userScroll = Date.now(); }, { passive: true }));
+  $('#panel').addEventListener('scroll', () => {
+    if (view !== 'roteiro' || suppress || scrollRaf || Date.now() - userScroll > 700) return;
+    scrollRaf = requestAnimationFrame(() => { scrollRaf = null; const panel = $('#panel'), line = panel.scrollTop + rhH() + 24; let win = 0; panel.querySelectorAll('.day').forEach((d, i) => { if (d.offsetTop <= line) win = i; }); if (win !== dayIdx) selectDay(win, { fromScroll: true }); });
+  }, { passive: true });
+
+  /* ---------- guia (Wikipédia) ---------- */
+  const GUIA = () => D.guia || window.ROTA27_GUIA || {};
+  function guide(rid, place) { let g = GUIA()[`${rid}/${place}`]; if (g && g.ref) g = GUIA()[g.ref]; return g || null; }
+  const wikiCache = {};
+  async function wiki(spec) {
+    const mm = spec.match(/^(pt|en|it|el|hr|sq|tr|sl):(.+)$/); const lang = mm ? mm[1] : 'pt', title = mm ? mm[2] : spec, key = `${lang}:${title}`;
+    if (wikiCache[key]) return wikiCache[key];
+    const stored = load(`rota27.wiki.${key}`, null); if (stored) return (wikiCache[key] = stored);
+    const tryFetch = async (l, t) => { const r = await fetch(`https://${l}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, '_'))}`); if (!r.ok) return null; const j = await r.json(); if (j.type === 'disambiguation') return null; return { title: j.title, extract: (j.extract || '').slice(0, 240), img: j.thumbnail?.source || null, url: j.content_urls?.desktop?.page || `https://${l}.wikipedia.org/wiki/${encodeURIComponent(t)}` }; };
+    let res = null;
+    try { res = await tryFetch(lang, title); if (!res) res = await tryFetch(lang === 'pt' ? 'en' : 'pt', title); } catch (e) {}
+    if (!res) res = { title, extract: '', img: null, url: `https://${lang}.wikipedia.org/w/index.php?search=${encodeURIComponent(title)}` };
+    wikiCache[key] = res; store(`rota27.wiki.${key}`, res); return res;
+  }
+  const bigThumb = (u) => u ? u.replace(/\/\d+px-/, '/900px-') : null;
+  function guideHTML(g, d) {
+    const p = P[d.place], gm = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
+    return `<div class="guide" data-pending="1">
+      ${g.wiki ? `<figure class="guide__cover" data-wiki="${esc(g.wiki)}"><img alt="" loading="lazy"><figcaption></figcaption></figure>` : ''}
+      <p class="guide__why">${esc(g.porque)}</p>
+      ${g.destaques?.length ? `<div class="hl-row">${g.destaques.map(h => `<a class="hl" data-wiki="${esc(h.wiki || '')}" href="#" target="_blank" rel="noopener"><img class="hl__img" alt="" loading="lazy"><div class="hl__b"><div class="hl__n">${esc(h.n)}</div><div class="hl__t">${esc(h.t)}</div><div class="hl__x"></div></div></a>`).join('')}</div>` : ''}
+      <div class="guide__links">${(g.links || []).map(l => `<a class="chip" href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t)}</a>`).join('')}<a class="chip" href="${gm}" target="_blank" rel="noopener">Google Maps</a></div>
+    </div>`;
+  }
+  async function hydrate(el) {
+    if (!el.dataset.pending) return; el.removeAttribute('data-pending');
+    const cov = el.querySelector('.guide__cover');
+    if (cov) { const w = await wiki(cov.dataset.wiki); const img = cov.querySelector('img'); if (w.img) { img.onerror = () => { img.onerror = null; img.src = w.img; }; img.src = bigThumb(w.img); } else cov.classList.add('no-img'); cov.querySelector('figcaption').innerHTML = `${esc(w.title)} · <a href="${esc(w.url)}" target="_blank" rel="noopener">Wikipédia</a>`; }
+    el.querySelectorAll('.hl').forEach(async a => { const spec = a.dataset.wiki; if (!spec) { a.removeAttribute('href'); return; } const w = await wiki(spec); a.href = w.url; const img = a.querySelector('img'); if (w.img) img.src = w.img; else img.hidden = true; a.querySelector('.hl__x').textContent = w.extract; });
+  }
+  let guideObs = null;
 
   /* ---------- render ---------- */
   function render() {
@@ -653,7 +712,6 @@ a { color: inherit; }
         <button class="rsel__btn" type="button" aria-haspopup="listbox" aria-expanded="false" id="rselBtn">
           <span class="dot" style="--rc:${c}"></span>
           <span class="rsel__txt"><span class="rsel__name">${esc(r.nome)}</span><span class="rsel__sub">${esc(r.sub)}</span></span>
-          <span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span>
           <svg class="ic rsel__chev"><use href="#i-chev"/></svg>
         </button>
         <div class="rsel__list" role="listbox" id="rselList" hidden>${D.routes.map(o => `<button class="rsel__opt" role="option" aria-selected="${o.id === r.id}" data-id="${o.id}" type="button"><span class="dot" style="--rc:${col(o)}"></span><span><b>${esc(o.nome)}</b><small>${esc(o.sub)}</small></span><span class="chip ${STATUS[o.status] || ''}" style="margin-left:auto">${esc(o.statusLabel)}</span></button>`).join('')}</div>
@@ -679,6 +737,7 @@ a { color: inherit; }
           ${d.desc ? `<div class="move" style="margin-top:10px"><svg class="ic ic--s"><use href="#i-plane"/></svg><div><div class="move__t">${esc(d.desc)}</div></div><div></div></div>` : ''}
           ${d.moves.length ? `<div class="moves">${d.moves.map(L => `<div class="move">${mIcon(L.mode, 'ic ic--s')}<div><div class="move__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}</div><div class="move__c">${esc(L.carrier || '')}${L.alt ? ' · alt. ' + esc(L.alt) : ''}</div></div><div class="move__d">${fmtMin(L.min)}</div></div>`).join('')}</div>` : ''}
           ${d.sides.length ? `<div class="moves">${d.sides.map(L => `<div class="move move--side">${mIcon(L.mode, 'ic ic--s')}<div><div class="move__t">${esc(L.note)} · ${esc(P[L.to].n)}</div><div class="move__c">${esc(L.carrier || '')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="move__d">${fmtMin(L.min)}</div></div>`).join('')}</div>` : ''}
+          ${d.stop && (d.kind === 'arrive' || d.kind === 'move') && guide(r.id, d.place) ? guideHTML(guide(r.id, d.place), d) : ''}
           ${d.bullets.length ? `<ul>${d.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}
           ${d.stop && (d.kind === 'arrive' || d.kind === 'move') ? `<div class="ideas" data-ideas="${d.place}"></div><div class="day__foot"><button class="btn btn--ghost" type="button" data-add="${d.place}">${icon('i-plus', 'ic ic--s')}Ideia · custo · hotel · dúvida</button></div>` : ''}
         </div></article>`;
@@ -735,13 +794,13 @@ a { color: inherit; }
     }
     // dias
     if (view === 'roteiro') {
-      el.querySelectorAll('.day').forEach(d => { d.addEventListener('click', (e) => { if (e.target.closest('button, a, form')) return; selectDay(+d.dataset.i, { scroll: true }); }); d.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectDay(+d.dataset.i, { scroll: true }); } }); });
+      el.querySelectorAll('.day').forEach(d => { d.addEventListener('click', (e) => { if (e.target.closest('button, a, form, .hl-row')) return; selectDay(+d.dataset.i); }); d.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === d) { e.preventDefault(); selectDay(+d.dataset.i); } }); });
       el.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => openIdeaForm(b.closest('.day'), b.dataset.add)));
       renderIdeas();
-      if (obs) obs.disconnect();
-      obs = new IntersectionObserver((entries) => { if (suppress) return; entries.forEach(e => { if (e.isIntersecting) selectDay(+e.target.dataset.i, { fromScroll: true }); }); }, { root: $('#panel'), rootMargin: '-30% 0px -55% 0px', threshold: 0 });
-      el.querySelectorAll('.day').forEach(d => obs.observe(d));
-      if (dayIdx < 0) selectDay(0);
+      if (guideObs) guideObs.disconnect();
+      guideObs = new IntersectionObserver((entries) => entries.forEach(e => { if (e.isIntersecting) hydrate(e.target); }), { root: $('#panel'), rootMargin: '300px 0px' });
+      el.querySelectorAll('.guide').forEach(g => guideObs.observe(g));
+      if (dayIdx < 0) selectDay(0); else document.querySelector(`.day[data-i="${dayIdx}"]`)?.classList.add('is-active');
     }
     if (view === 'trechos') el.querySelectorAll('.legrow').forEach(row => { const go = () => { legIdx = +row.dataset.leg; el.querySelectorAll('.legrow').forEach(x => x.classList.toggle('is-active', x === row)); const L = r.legs[legIdx]; setActiveLegs([L]); const b = new maplibregl.LngLatBounds(); legCoords(L).forEach(pt => b.extend(pt)); map.fitBounds(b, { padding: padding(), duration: reduced ? 0 : 800, maxZoom: 9.5 }); }; row.addEventListener('click', go); row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
     if (view === 'comparar') {

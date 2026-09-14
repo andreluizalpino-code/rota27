@@ -1,3 +1,4 @@
 # conteúdo dos roteiros fica fora do repositório público — vive no Supabase (RLS)
 data/routes.js
+supabase/seed-content.sql
 .DS_Store

@@ -24,7 +24,7 @@
   --primary: #10151C; --on-primary: #FFFFFF;
   --accent: #FF5722; --ok: #0F8A5F; --warn: #B45309; --neg: #C62828;
   --glass: rgba(255,255,255,0.94); --shadow: 0 8px 28px rgba(16,21,28,0.10), 0 1px 2px rgba(16,21,28,0.06);
-  --casing: #FFFFFF; --scrim: rgba(16,21,28,0.5);
+  --casing: #FFFFFF; --scrim: rgba(16,21,28,0.5); --sea-casing: #BFE0F7;
   --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
   --font-body: "Satoshi", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -41,7 +41,7 @@
   --ink: #EDEFF2; --ink-2: rgba(237,239,242,0.82); --ink-3: rgba(237,239,242,0.58);
   --primary: #EDEFF2; --on-primary: #0F1318;
   --glass: rgba(22,27,34,0.92); --shadow: 0 8px 28px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.4);
-  --casing: #0F1318; --scrim: rgba(0,0,0,0.6);
+  --casing: #0F1318; --scrim: rgba(0,0,0,0.6); --sea-casing: #1E3A52;
 }
 html { font-size: 19px; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; text-rendering: optimizeLegibility; height: 100dvh; overflow: hidden; }
@@ -125,6 +125,15 @@ a { color: inherit; }
 .pin--gate .ic { width: 18px; height: 18px; }
 .pin--gate.is-active { background: var(--accent); }
 .pin--dim { opacity: .35 !important; }
+/* rótulos de lugar, selos de trecho e ponto em movimento (só nos trechos ativos) */
+.wp { display: inline-flex; align-items: center; gap: 6px; pointer-events: none; white-space: nowrap; }
+.wp__dot { width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 3px solid var(--rc); box-shadow: 0 1px 4px rgba(16,21,28,.3); flex: none; }
+.wp__t { font-family: var(--font-display); font-weight: 600; font-size: .9rem; line-height: 1.2; color: var(--ink); background: var(--glass); border: 1px solid var(--line); border-radius: 8px; padding: 3px 9px; box-shadow: var(--shadow); }
+.legbadge { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px 0 5px; border-radius: 999px; background: var(--surface); border: 2px solid var(--rc); color: var(--ink); font-size: var(--fs-label); font-weight: 700; box-shadow: 0 2px 8px rgba(16,21,28,.25); white-space: nowrap; pointer-events: none; }
+.legbadge b { width: 20px; height: 20px; border-radius: 50%; background: var(--rc); color: #fff; font-family: var(--font-mono); font-size: .8rem; display: grid; place-items: center; }
+.legbadge .ic { color: var(--rc); width: 18px; height: 18px; }
+.legbadge .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+.runner { width: 14px; height: 14px; border-radius: 50%; background: var(--rc); border: 3px solid var(--casing); box-shadow: 0 0 0 4px color-mix(in srgb, var(--rc) 30%, transparent), 0 2px 6px rgba(16,21,28,.35); pointer-events: none; }
 
 /* overlays no mapa */
 .map-top { position: absolute; z-index: 10; left: var(--s3); top: var(--s3); right: 64px; display: flex; gap: var(--s2); align-items: flex-start; pointer-events: none; }
@@ -136,9 +145,13 @@ a { color: inherit; }
 .map-actions .btn { box-shadow: var(--shadow); }
 .legend { position: absolute; z-index: 10; left: var(--s3); bottom: var(--s3); display: flex; gap: var(--s3); background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); box-shadow: var(--shadow); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
-.legend i { display: inline-block; width: 26px; height: 0; border-top: 3px solid var(--ink); }
-.legend i.dash { border-top-style: dashed; }
-.legend i.dot { border-top-style: dotted; }
+.legend .ic { color: var(--rc); width: 18px; height: 18px; }
+.lg { position: relative; display: inline-block; width: 32px; height: 10px; flex: none; }
+.lg::before { content: ""; position: absolute; left: 0; right: 0; top: 3px; height: 4px; border-radius: 2px; background: var(--rc); }
+.lg--rail::after { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 2px; background: repeating-linear-gradient(90deg, transparent 0 3px, var(--casing) 3px 6px); }
+.lg--sea { background: var(--sea-casing); border-radius: 999px; }
+.lg--sea::before { left: 3px; right: 3px; background: repeating-linear-gradient(90deg, var(--rc) 0 6px, transparent 6px 9px); }
+.lg--air::before { height: 0; background: none; border-top: 3px dotted var(--rc); border-radius: 0; }
 
 /* ---------- painel: cabeçalho da rota ---------- */
 .rh { padding: var(--s3) var(--s3) var(--s2); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 3; }
@@ -180,12 +193,21 @@ a { color: inherit; }
 .day__title { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; line-height: 1.15; margin-top: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .day__title .chip { height: 24px; font-size: .75rem; }
 .moves { display: grid; gap: 6px; margin-top: 10px; }
-.move { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-sec); }
-.move .ic { color: var(--rc); }
+.move { display: grid; grid-template-columns: 20px 40px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px 8px 8px; border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-sec); }
+.move__n { font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 600; color: var(--ink-3); text-align: center; }
+.move__ic { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: color-mix(in srgb, var(--rc) 14%, var(--surface)); color: var(--rc); }
+.move__ic .ic { width: 23px; height: 23px; stroke-width: 2; }
+.move__b { min-width: 0; }
 .move__t { font-weight: 700; }
-.move__c { color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
-.move__d { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
+.move__c { color: var(--ink-2); font-size: var(--fs-label); font-weight: 500; margin-top: 1px; }
+.move__c b { color: var(--rc); text-transform: uppercase; letter-spacing: .05em; font-size: .8rem; }
+.move__alt { color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
+.move__r { text-align: right; white-space: nowrap; }
+.move__d { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+.move__h { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: var(--fs-sec); }
+.move__h + .move__d { font-size: var(--fs-label); color: var(--ink-3); font-weight: 500; line-height: 1.2; }
 .move--side { background: transparent; border: 1px dashed var(--line-2); }
+.moves__note { font-size: var(--fs-label); color: var(--ink-3); font-weight: 500; padding: 0 4px; }
 .day ul { margin-top: 10px; padding-left: 18px; color: var(--ink-2); font-size: var(--fs-sec); display: grid; gap: 4px; }
 .day ul li::marker { color: var(--rc); }
 .day__foot { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
@@ -224,11 +246,12 @@ a { color: inherit; }
 
 /* ---------- trechos ---------- */
 .legs { padding: var(--s2) var(--s3) var(--s6); display: grid; gap: 8px; }
-.legrow { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface); cursor: pointer; transition: background var(--ease), border-color var(--ease); }
+.legrow { display: grid; grid-template-columns: 24px 40px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface); cursor: pointer; transition: background var(--ease), border-color var(--ease); }
 .legrow:hover, .legrow.is-active { background: color-mix(in srgb, var(--rc) 7%, var(--surface)); border-color: var(--rc); }
 .legrow .ic { color: var(--rc); }
 .legrow__t { font-weight: 700; font-size: var(--fs-sec); }
-.legrow__c { color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
+.legrow__c { color: var(--ink-2); font-size: var(--fs-label); font-weight: 500; }
+.legrow__c b { color: var(--rc); text-transform: uppercase; letter-spacing: .05em; font-size: .8rem; }
 .legrow__d { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
 .legrow__n { font-family: var(--font-mono); font-size: .75rem; color: var(--ink-3); text-align: center; }
 
@@ -363,7 +386,7 @@ a { color: inherit; }
       <div class="map-actions">
         <button class="btn btn--icon" id="fitBtn" type="button" aria-label="Ver rota inteira" title="Ver rota inteira"><svg class="ic"><use href="#i-fit"/></svg></button>
       </div>
-      <div class="legend" aria-hidden="true"><span><i></i>terra</span><span><i class="dash"></i>balsa</span><span><i class="dot"></i>avião</span></div>
+      <div class="legend" id="legend" aria-hidden="true"><span><i class="lg"></i><svg class="ic"><use href="#i-car"/></svg>carro</span><span><i class="lg lg--rail"></i><svg class="ic"><use href="#i-train"/></svg>trem</span><span><i class="lg lg--sea"></i><svg class="ic"><use href="#i-ferry"/></svg>balsa</span><span><i class="lg lg--air"></i><svg class="ic"><use href="#i-plane"/></svg>avião</span></div>
     </div>
   </div>
 </div>
@@ -387,6 +410,24 @@ a { color: inherit; }
   const MODEI = { plane: ['i-plane', 'avião'], train: ['i-train', 'trem'], bus: ['i-bus', 'ônibus'], ferry: ['i-ferry', 'balsa'], car: ['i-car', 'carro'], hike: ['i-hike', 'a pé'] };
   const mIcon = (m, cls) => icon(MODEI[m][0], cls);
   const fmtMin = (m) => { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h}h${String(mm).padStart(2, '0')}` : `${mm} min`; };
+  /* horários do dia: encadeia os trechos a partir das 09:00 com espera antes de embarcar por modo.
+     Um trecho com dep/arr no conteúdo (horário real) trava a cadeia; sem isso, mostra como estimativa. */
+  const hm = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const fmtHM = (m) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const WAIT = { plane: 150, ferry: 40, train: 30, bus: 25, car: 15, hike: 15 };
+  function schedule(legs, start = 9 * 60) {
+    let t = start, est = false;
+    const out = legs.map((L, i) => { const dep = L.dep ? hm(L.dep) : (i === 0 ? t : t + (WAIT[L.mode] || 20)); const arr = L.arr ? hm(L.arr) : dep + L.min; if (!L.dep) est = true; t = arr; return { dep: fmtHM(dep), arr: fmtHM(arr) }; });
+    out.est = est; return out;
+  }
+  const timeCol = (dep, dur, arr) => dep ? `<div class="move__r"><div class="move__h">${dep}</div><div class="move__d">${dur}</div><div class="move__h">${arr}</div></div>` : `<div class="move__r"><div class="move__d">${dur}</div></div>`;
+  function moveRow(L, n, sched, side) {
+    return `<div class="move ${side ? 'move--side' : ''}"><span class="move__n">${n}</span><span class="move__ic">${mIcon(L.mode, 'ic')}</span><div class="move__b"><div class="move__t">${side ? esc(L.note) + ' · ' : ''}${esc(P[L.from].n)} → ${esc(P[L.to].n)}</div><div class="move__c"><b>${MODEI[L.mode][1]}</b>${L.carrier ? ' · ' + esc(L.carrier) : ''}</div>${L.alt ? `<div class="move__alt">${side ? '' : 'alt. '}${esc(L.alt)}</div>` : ''}</div>${timeCol(sched && sched.dep, fmtMin(L.min), sched && sched.arr)}</div>`;
+  }
+  function flightRow(f) {
+    const [dia, hora] = f.chega.split(' · ');
+    return `<div class="moves"><div class="move"><span class="move__n"></span><span class="move__ic">${icon('i-plane', 'ic')}</span><div class="move__b"><div class="move__t">${esc(f.de)} → ${esc(f.para)}</div><div class="move__c"><b>avião</b> · ${esc(f.cia)} · ${esc(f.tipo)}</div><div class="move__alt">chega ${esc(dia)}${f.nota ? ' · ' + esc(f.nota) : ''}</div></div>${timeCol(esc(f.hora), esc(f.dur), esc(hora || ''))}</div></div>`;
+  }
   const KINDS = { ideia: 'Ideia', custo: 'Custo', hotel: 'Hotel', duvida: 'Dúvida' };
   const PEOPLE = { andre: { initial: 'A', name: 'André' }, rapha: { initial: 'R', name: 'Raphaella' } };
   const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
@@ -398,7 +439,7 @@ a { color: inherit; }
 
   /* ---------- estado ---------- */
   let D = null, P = null, S = { votes: [], notes: [], ideas: [] };
-  let map = null, mapReady = false, markers = [], routeId = null, view = 'roteiro', days = [], dayIdx = -1, legIdx = -1, antsTimer = null;
+  let map = null, mapReady = false, markers = [], legMarkers = [], labelMarkers = [], runnerM = null, runnerRaf = null, routeId = null, view = 'roteiro', days = [], dayIdx = -1, legIdx = -1;
   const theme = () => load('rota27.theme', 'light');
   const col = (r) => (PALETTE[r.id] || ['#10151C', '#EDEFF2'])[theme() === 'dark' ? 1 : 0];
   const R = () => D.routes.find(r => r.id === routeId);
@@ -521,7 +562,7 @@ a { color: inherit; }
       }
     });
     const lastStop = r.stops[r.stops.length - 1];
-    out.push(mk({ date: m.volta.data, kind: 'back', title: 'Voo de volta', place: lastStop.place, stop: lastStop, si: r.stops.length - 1, desc: `${m.volta.de} ${m.volta.hora} · ${m.volta.cia} ${m.volta.tipo} · ${m.volta.dur}`, bullets: (lastStop.bullets.filter(b => b.startsWith(m.volta.data)).map(b => b.replace(/^\d{2}\/07\s*[—-]\s*/, ''))) }));
+    out.push(mk({ date: m.volta.data, kind: 'back', title: 'Voo de volta', place: lastStop.place, stop: lastStop, si: r.stops.length - 1, moves: legs.slice(li).filter(L => !L.note), desc: `${m.volta.de} ${m.volta.hora} · ${m.volta.cia} ${m.volta.tipo} · ${m.volta.dur}`, bullets: (lastStop.bullets.filter(b => b.startsWith(m.volta.data)).map(b => b.replace(/^\d{2}\/07\s*[—-]\s*/, ''))) }));
     out.push(mk({ date: m.volta.chega.split(' ')[0], kind: 'home', title: 'Chegada em casa', place: null, desc: `${m.volta.para} ${m.volta.chega.split('· ')[1] || ''}` }));
     return out;
   }
@@ -546,20 +587,37 @@ a { color: inherit; }
   function fc(r) {
     return { type: 'FeatureCollection', features: r.legs.map((L, i) => P[L.from] && P[L.to] ? { type: 'Feature', properties: { i, mode: L.mode, side: !!L.note, route: r.id, label: `${P[L.from].n} → ${P[L.to].n} · ${MODEI[L.mode][1]} · ${fmtMin(L.min)}` }, geometry: { type: 'LineString', coordinates: legCoords(L) } } : null).filter(Boolean) };
   }
-  const W = ['interpolate', ['linear'], ['zoom'], 4, 2.2, 8, 3.6, 12, 5.5];
-  const WC = ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 7, 12, 9.5];
+  /* Uma linguagem por modo, igual no mapa e na legenda:
+     carro/ônibus = traço cheio · trem = cheio com travessas claras · balsa = tracejado sobre halo azul-mar · avião = pontilhado em arco.
+     Os trechos ativos usam a mesma linguagem, mais grossos e com brilho — nunca um tracejado genérico. */
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const wz = (a, b, c) => ['interpolate', ['linear'], ['zoom'], 4, a, 8, b, 12, c];
+  const LAYER_KEYS = ['glow', 'casing', 'land', 'rail', 'ferry', 'plane'];
+  function modeLayerDefs(color, { active = false } = {}) {
+    const cas = cssVar('--casing'), sea = cssVar('--sea-casing'), k = active ? 1.7 : 1, x = active ? 4 : 0;
+    const notAir = ['!=', ['get', 'mode'], 'plane'], isFerry = ['==', ['get', 'mode'], 'ferry'];
+    const defs = [
+      { k: 'casing', filter: notAir, paint: { 'line-color': ['case', isFerry, sea, cas], 'line-width': wz(5 * k + x, 7 * k + x, 9.5 * k + x), 'line-opacity': active ? 1 : .9 } },
+      { k: 'land', filter: ['all', notAir, ['!=', ['get', 'mode'], 'ferry']], paint: { 'line-color': color, 'line-width': wz(2.2 * k, 3.6 * k, 5.5 * k) } },
+      { k: 'rail', filter: ['==', ['get', 'mode'], 'train'], paint: { 'line-color': cas, 'line-width': wz(1 * k, 1.6 * k, 2.4 * k), 'line-dasharray': [1.6, 1.6] }, layout: { 'line-cap': 'butt' } },
+      { k: 'ferry', filter: isFerry, paint: { 'line-color': color, 'line-width': wz(2.2 * k, 3.6 * k, 5.5 * k), 'line-dasharray': [2.4, 1.6] }, layout: { 'line-cap': 'butt' } },
+      { k: 'plane', filter: ['==', ['get', 'mode'], 'plane'], paint: { 'line-color': color, 'line-width': 2.4 * k, 'line-dasharray': [0.1, 2.4] } },
+    ];
+    if (active) defs.unshift({ k: 'glow', filter: ['has', 'mode'], paint: { 'line-color': color, 'line-width': wz(16, 22, 28), 'line-opacity': .2, 'line-blur': 6 } });
+    return defs;
+  }
   function paintMap() {
     if (!map.isStyleLoaded()) return;
-    const cas = getComputedStyle(document.documentElement).getPropertyValue('--casing').trim();
+    const upsert = (lid, src, def) => {
+      if (map.getLayer(lid)) { Object.entries(def.paint).forEach(([k, v]) => map.setPaintProperty(lid, k, v)); return false; }
+      map.addLayer({ id: lid, type: 'line', source: src, filter: def.filter, paint: def.paint, layout: { 'line-cap': 'round', 'line-join': 'round', ...(def.layout || {}) } }); return true;
+    };
     D.routes.forEach(r => {
       const id = `route-${r.id}`, c = col(r);
       if (!map.getSource(id)) map.addSource(id, { type: 'geojson', data: fc(r) });
-      const add = (lid, filter, paint, layout) => { if (map.getLayer(lid)) { Object.entries(paint).forEach(([k, v]) => map.setPaintProperty(lid, k, v)); return; } map.addLayer({ id: lid, type: 'line', source: id, filter, paint, layout: { 'line-cap': 'round', 'line-join': 'round', ...layout } }); };
-      add(`${id}-casing`, ['!=', ['get', 'mode'], 'plane'], { 'line-color': cas, 'line-width': WC, 'line-opacity': 0.9 }, {});
-      add(`${id}-land`, ['all', ['!=', ['get', 'mode'], 'plane'], ['!=', ['get', 'mode'], 'ferry']], { 'line-color': c, 'line-width': W }, {});
-      add(`${id}-ferry`, ['==', ['get', 'mode'], 'ferry'], { 'line-color': c, 'line-width': W, 'line-dasharray': [2, 2] }, {});
-      add(`${id}-plane`, ['==', ['get', 'mode'], 'plane'], { 'line-color': c, 'line-width': 2.4, 'line-dasharray': [0.1, 2.4] }, {});
-      [`${id}-land`, `${id}-ferry`, `${id}-plane`].forEach(lid => {
+      modeLayerDefs(c).forEach(def => {
+        const lid = `${id}-${def.k}`, fresh = upsert(lid, id, def);
+        if (!fresh || def.k === 'casing' || def.k === 'rail') return;
         map.on('mouseenter', lid, (e) => { map.getCanvas().style.cursor = 'pointer'; popup.setLngLat(e.lngLat).setHTML(esc(e.features[0].properties.label)).addTo(map); });
         map.on('mousemove', lid, (e) => popup.setLngLat(e.lngLat));
         map.on('mouseleave', lid, () => { map.getCanvas().style.cursor = ''; popup.remove(); });
@@ -567,8 +625,7 @@ a { color: inherit; }
       });
     });
     if (!map.getSource('active')) map.addSource('active', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-    if (!map.getLayer('active-casing')) map.addLayer({ id: 'active-casing', type: 'line', source: 'active', paint: { 'line-color': cas, 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 9, 12, 14], 'line-opacity': .95 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
-    if (!map.getLayer('active-line')) map.addLayer({ id: 'active-line', type: 'line', source: 'active', paint: { 'line-color': '#10151C', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 12, 8] }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    modeLayerDefs(col(R()), { active: true }).forEach(def => upsert(`active-${def.k}`, 'active', def));
     applyVisibility();
   }
   const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
@@ -576,21 +633,51 @@ a { color: inherit; }
     if (!mapReady) return;
     D.routes.forEach(r => {
       const on = view === 'comparar' || r.id === routeId, id = `route-${r.id}`;
-      ['casing', 'land', 'ferry', 'plane'].forEach(k => { const lid = `${id}-${k}`; if (map.getLayer(lid)) { map.setLayoutProperty(lid, 'visibility', on ? 'visible' : 'none'); map.setPaintProperty(lid, 'line-opacity', view === 'comparar' ? (r.id === routeId ? 1 : .55) : (k === 'casing' ? .9 : 1)); } });
+      LAYER_KEYS.forEach(k => { const lid = `${id}-${k}`; if (map.getLayer(lid)) { map.setLayoutProperty(lid, 'visibility', on ? 'visible' : 'none'); map.setPaintProperty(lid, 'line-opacity', view === 'comparar' ? (r.id === routeId ? 1 : .55) : (k === 'casing' ? .9 : 1)); } });
     });
   }
-  function setActiveLegs(legs, color) {
+  const legMid = (L) => { const cs = legCoords(L); return cs.length === 2 ? [(cs[0][0] + cs[1][0]) / 2, (cs[0][1] + cs[1][1]) / 2] : cs[cs.length >> 1]; };
+  function setActiveLegs(legs, color, { n0 = 1 } = {}) {
     if (!mapReady) return;
-    const r = R();
+    const c = color || col(R());
     map.getSource('active').setData({ type: 'FeatureCollection', features: legs.map(L => ({ type: 'Feature', properties: { mode: L.mode }, geometry: { type: 'LineString', coordinates: legCoords(L) } })) });
-    map.setPaintProperty('active-line', 'line-color', color || col(r));
-    const dashed = legs.length && legs.every(L => L.mode === 'plane');
-    map.setPaintProperty('active-line', 'line-dasharray', dashed ? [0.1, 2] : [1, 0]);
-    clearInterval(antsTimer);
-    if (legs.length && !dashed && !reduced) {
-      const seq = [[0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0], [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2], [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5]];
-      let st = 0; antsTimer = setInterval(() => { st = (st + 1) % seq.length; if (map.getLayer('active-line')) map.setPaintProperty('active-line', 'line-dasharray', seq[st]); }, 70);
-    }
+    ['glow', 'land', 'ferry', 'plane'].forEach(k => { if (map.getLayer(`active-${k}`)) map.setPaintProperty(`active-${k}`, 'line-color', c); });
+    legMarkers.forEach(m => m.remove()); legMarkers = [];
+    legs.forEach((L, i) => {
+      const el = document.createElement('div'); el.className = 'legbadge'; el.style.setProperty('--rc', c);
+      el.innerHTML = `<b>${n0 + i}</b>${mIcon(L.mode, 'ic')}<span>${MODEI[L.mode][1]}</span><span class="mono">${fmtMin(L.min)}</span>`;
+      legMarkers.push(new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(legMid(L)).addTo(map));
+    });
+    runner(legs, c);
+  }
+  /* nomes dos lugares envolvidos no dia (bases ao lado do alfinete; pontos de passagem com bolinha própria) */
+  function setPlaceLabels(keys, color) {
+    if (!mapReady) return;
+    labelMarkers.forEach(m => m.remove()); labelMarkers = [];
+    const c = color || col(R()), bases = new Set(['fco', ...R().stops.map(s => s.place)]);
+    [...new Set(keys)].forEach(k => {
+      const p = P[k]; if (!p) return;
+      const base = bases.has(k), el = document.createElement('div'); el.className = 'wp'; el.style.setProperty('--rc', c);
+      el.innerHTML = `${base ? '' : '<i class="wp__dot"></i>'}<span class="wp__t">${esc(p.n)}</span>`;
+      labelMarkers.push(new maplibregl.Marker({ element: el, anchor: 'left', offset: base ? [22, 0] : [-6, 0] }).setLngLat([p.lng, p.lat]).addTo(map));
+    });
+  }
+  /* ponto que percorre os trechos ativos na ordem do dia — mostra direção sem mexer no padrão da linha */
+  function runner(legs, c) {
+    cancelAnimationFrame(runnerRaf); runnerRaf = null; if (runnerM) { runnerM.remove(); runnerM = null; }
+    if (!legs.length || reduced) return;
+    const segs = [], cum = [0];
+    legs.forEach(L => { const cs = legCoords(L); for (let i = 1; i < cs.length; i++) { segs.push([cs[i - 1], cs[i]]); cum.push(cum[cum.length - 1] + Math.hypot(cs[i][0] - cs[i - 1][0], cs[i][1] - cs[i - 1][1])); } });
+    const total = cum[cum.length - 1]; if (!total) return;
+    const el = document.createElement('div'); el.className = 'runner'; el.style.setProperty('--rc', c);
+    runnerM = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(segs[0][0]).addTo(map);
+    const period = Math.min(9000, Math.max(3200, total * 1400)), t0 = performance.now();
+    const step = (now) => {
+      const u = ((now - t0) % period) / period * total; let i = 1; while (i < cum.length - 1 && cum[i] < u) i++;
+      const [a, b] = segs[i - 1], f = (u - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1);
+      runnerM.setLngLat([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]); runnerRaf = requestAnimationFrame(step);
+    };
+    runnerRaf = requestAnimationFrame(step);
   }
   function buildMarkers(r) {
     markers.forEach(m => m.remove()); markers = [];
@@ -606,7 +693,7 @@ a { color: inherit; }
     });
   }
   function routeBounds(r) { const b = new maplibregl.LngLatBounds(); r.stops.forEach(s => b.extend([P[s.place].lng, P[s.place].lat])); b.extend([P.fco.lng, P.fco.lat]); return b; }
-  function padding() { const mobile = innerWidth <= 900; return mobile ? { top: 80, bottom: Math.round(innerHeight * .54) + 24, left: 30, right: 30 } : { top: 130, bottom: 70, left: 70, right: 90 }; }
+  function padding() { const mobile = innerWidth <= 900; return mobile ? { top: 80, bottom: Math.round(innerHeight * .54) + 24, left: 30, right: 60 } : { top: 130, bottom: 70, left: 80, right: 170 }; }
   function fitRoute(r = R()) { if (!mapReady) return; map.fitBounds(routeBounds(r), { padding: padding(), duration: reduced ? 0 : 900, maxZoom: 8 }); }
   function fitAll() { const b = new maplibregl.LngLatBounds(); D.routes.forEach(r => b.extend(routeBounds(r))); map.fitBounds(b, { padding: padding(), duration: reduced ? 0 : 900 }); }
 
@@ -614,14 +701,15 @@ a { color: inherit; }
   function setRoute(id, { keepView = false } = {}) {
     routeId = id; days = buildDays(R()); dayIdx = -1; legIdx = -1;
     history.replaceState(null, '', `#rota=${id}`);
-    if (mapReady) { applyVisibility(); buildMarkers(R()); setActiveLegs([]); if (!keepView) fitRoute(); }
+    $('#legend')?.style.setProperty('--rc', col(R()));
+    if (mapReady) { applyVisibility(); buildMarkers(R()); setActiveLegs([]); setPlaceLabels([]); if (!keepView) fitRoute(); }
     render();
   }
   function setView(v) {
     view = v; $('#body').dataset.view = v;
     $('#tabs').querySelectorAll('[role=tab]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.view === v)));
     applyVisibility();
-    if (v === 'comparar') { setActiveLegs([]); markers.forEach(m => m.getElement().classList.add('pin--dim')); fitAll(); $('#routeCard').innerHTML = `<div class="route-card__t">${D.routes.length} rotas no mapa</div><div class="route-card__s">Passe o mouse num cartão para destacar</div>`; }
+    if (v === 'comparar') { setActiveLegs([]); setPlaceLabels([]); markers.forEach(m => m.getElement().classList.add('pin--dim')); fitAll(); $('#routeCard').innerHTML = `<div class="route-card__t">${D.routes.length} rotas no mapa</div><div class="route-card__s">Passe o mouse num cartão para destacar</div>`; }
     else { markers.forEach(m => m.getElement().classList.remove('pin--dim')); if (v === 'roteiro' && dayIdx < 0) fitRoute(); }
     render();
     $('#panel').scrollTop = 0;
@@ -639,15 +727,16 @@ a { color: inherit; }
     markers.forEach((m, k) => { const el = m.getElement(); const isGate = k === 0; el.classList.toggle('is-active', isGate ? (d.kind === 'out' || d.kind === 'back' || d.kind === 'home') : (k - 1 === d.si && d.kind !== 'out' && d.kind !== 'home')); });
     if (mapReady) {
       const pad = padding(), dur = reduced ? 0 : 900;
-      if (d.kind === 'out' || d.kind === 'home') { setActiveLegs([]); map.easeTo({ center: [P.fco.lng, P.fco.lat], zoom: 5.2, padding: pad, duration: dur }); }
-      else if (d.moves.length) {
-        setActiveLegs(d.moves);
+      const ends = (ls) => ls.flatMap(L => [L.from, L.to]);
+      if (d.kind === 'out' || d.kind === 'home') { setActiveLegs([]); setPlaceLabels(['fco']); map.easeTo({ center: [P.fco.lng, P.fco.lat], zoom: 5.2, padding: pad, duration: dur }); }
+      else if (d.moves.length && d.kind !== 'back') {
+        setActiveLegs(d.moves); setPlaceLabels(ends(d.moves));
         const b = new maplibregl.LngLatBounds(); d.moves.forEach(L => legCoords(L).forEach(pt => b.extend(pt))); map.fitBounds(b, { padding: pad, duration: dur, maxZoom: 9.5 });
       } else if (d.kind === 'back') {
-        const back = r.legs.filter(L => L.to === 'roma' && !L.note); setActiveLegs(back.length ? back : []);
+        const back = d.moves.length ? d.moves : r.legs.filter(L => L.to === 'roma' && !L.note); setActiveLegs(back); setPlaceLabels(back.length ? ends(back) : [d.place, 'fco']);
         map.easeTo({ center: [P.fco.lng, P.fco.lat], zoom: 6, padding: pad, duration: dur });
       } else {
-        setActiveLegs(d.sides.length ? d.sides : []);
+        setActiveLegs(d.sides); setPlaceLabels([d.place, ...ends(d.sides)]);
         const p = P[d.place]; map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 8.6), padding: pad, duration: dur });
       }
     }
@@ -746,9 +835,10 @@ a { color: inherit; }
         <div class="day__body">
           <div class="day__kind">${icon(ic, 'ic ic--s')}${kl}</div>
           <div class="day__title">${esc(d.title)}${d.kind === 'arrive' ? ` <span class="chip">${esc(D.meta.saida.chega.split('· ')[1])} em ${esc(D.meta.saida.para)}</span>` : ''}${d.nights && (d.kind === 'arrive' || d.kind === 'move') ? ` <span class="chip ${anchor ? 'chip--ok' : ''}">${d.nights} ${d.nights === 1 ? 'noite' : 'noites'}${anchor ? ' · âncora' : ''}</span>` : ''}</div>
-          ${d.desc ? `<div class="move" style="margin-top:10px"><svg class="ic ic--s"><use href="#i-plane"/></svg><div><div class="move__t">${esc(d.desc)}</div></div><div></div></div>` : ''}
-          ${d.moves.length ? `<div class="moves">${d.moves.map(L => `<div class="move">${mIcon(L.mode, 'ic ic--s')}<div><div class="move__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}</div><div class="move__c">${esc(L.carrier || '')}${L.alt ? ' · alt. ' + esc(L.alt) : ''}</div></div><div class="move__d">${fmtMin(L.min)}</div></div>`).join('')}</div>` : ''}
-          ${d.sides.length ? `<div class="moves">${d.sides.map(L => `<div class="move move--side">${mIcon(L.mode, 'ic ic--s')}<div><div class="move__t">${esc(L.note)} · ${esc(P[L.to].n)}</div><div class="move__c">${esc(L.carrier || '')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="move__d">${fmtMin(L.min)}</div></div>`).join('')}</div>` : ''}
+          ${d.kind === 'out' ? flightRow(D.meta.saida) : d.kind === 'home' ? `<div class="move__c" style="margin-top:6px">${esc(d.desc)}</div>` : ''}
+          ${d.moves.length ? (() => { const sc = schedule(d.moves); return `<div class="moves">${d.moves.map((L, k) => moveRow(L, k + 1, sc[k])).join('')}${sc.est ? `<div class="moves__note">horários estimados a partir das 09:00 · confirmar ao comprar</div>` : ''}</div>`; })() : ''}
+          ${d.kind === 'back' ? flightRow(D.meta.volta) : ''}
+          ${d.sides.length ? `<div class="moves">${d.sides.map(L => moveRow(L, '', null, true)).join('')}</div>` : ''}
           ${d.stop && (d.kind === 'arrive' || d.kind === 'move') && guide(r.id, d.place) ? guideHTML(guide(r.id, d.place), d) : ''}
           ${d.bullets.length ? `<ul>${d.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}
           ${d.stop && (d.kind === 'arrive' || d.kind === 'move') ? `<div class="ideas" data-ideas="${d.place}"></div><div class="day__foot"><button class="btn btn--ghost" type="button" data-add="${d.place}">${icon('i-plus', 'ic ic--s')}Ideia · custo · hotel · dúvida</button></div>` : ''}
@@ -759,7 +849,7 @@ a { color: inherit; }
     const main = r.legs.filter(l => !l.note), total = main.reduce((a, l) => a + l.min, 0), by = {};
     main.forEach(l => by[l.mode] = (by[l.mode] || 0) + 1);
     return `<div class="legs" style="--rc:${col(r)}"><div class="stats" style="margin:4px 0 8px"><div class="stat"><b>${main.length}</b><span>trechos</span></div><div class="stat"><b>${fmtMin(total)}</b><span>em trânsito</span></div><div class="stat"><b>${Object.keys(by).map(m => `${by[m]}<span style="display:inline-flex;vertical-align:-2px;margin:0 6px 0 2px">${mIcon(m, 'ic ic--s')}</span>`).join('')}</b><span>por modo</span></div></div>` +
-      r.legs.map((L, i) => `<div class="legrow ${i === legIdx ? 'is-active' : ''}" data-leg="${i}" role="button" tabindex="0"><span class="legrow__n mono">${i + 1}</span><div><div class="legrow__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}${L.note ? ` <span class="chip">${esc(L.note)}</span>` : ''}</div><div class="legrow__c">${MODEI[L.mode][1]} · ${esc(L.carrier || '—')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="legrow__d">${fmtMin(L.min)}</div></div>`).join('') + `</div>`;
+      r.legs.map((L, i) => `<div class="legrow ${i === legIdx ? 'is-active' : ''}" data-leg="${i}" role="button" tabindex="0"><span class="legrow__n mono">${i + 1}</span><span class="move__ic">${mIcon(L.mode, 'ic')}</span><div><div class="legrow__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}${L.note ? ` <span class="chip">${esc(L.note)}</span>` : ''}</div><div class="legrow__c"><b>${MODEI[L.mode][1]}</b> · ${esc(L.carrier || '—')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="legrow__d">${fmtMin(L.min)}</div></div>`).join('') + `</div>`;
   }
   function compareHTML() {
     const order = ['recomendado', 'finalista', 'surpresa', 'sobrevivente', 'fria', 'condicional'];
@@ -814,7 +904,7 @@ a { color: inherit; }
       el.querySelectorAll('.guide').forEach(g => guideObs.observe(g));
       if (dayIdx < 0) selectDay(0); else document.querySelector(`.day[data-i="${dayIdx}"]`)?.classList.add('is-active');
     }
-    if (view === 'trechos') el.querySelectorAll('.legrow').forEach(row => { const go = () => { legIdx = +row.dataset.leg; el.querySelectorAll('.legrow').forEach(x => x.classList.toggle('is-active', x === row)); const L = r.legs[legIdx]; setActiveLegs([L]); const b = new maplibregl.LngLatBounds(); legCoords(L).forEach(pt => b.extend(pt)); map.fitBounds(b, { padding: padding(), duration: reduced ? 0 : 800, maxZoom: 9.5 }); }; row.addEventListener('click', go); row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
+    if (view === 'trechos') el.querySelectorAll('.legrow').forEach(row => { const go = () => { legIdx = +row.dataset.leg; el.querySelectorAll('.legrow').forEach(x => x.classList.toggle('is-active', x === row)); const L = r.legs[legIdx]; setActiveLegs([L], null, { n0: legIdx + 1 }); setPlaceLabels([L.from, L.to]); const b = new maplibregl.LngLatBounds(); legCoords(L).forEach(pt => b.extend(pt)); map.fitBounds(b, { padding: padding(), duration: reduced ? 0 : 800, maxZoom: 9.5 }); }; row.addEventListener('click', go); row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
     if (view === 'comparar') {
       el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { setRoute(b.dataset.go); setView('roteiro'); }));
       el.querySelectorAll('.card').forEach(c => { c.addEventListener('mouseenter', () => hi(c.dataset.route)); c.addEventListener('mouseleave', () => hi(null)); });
@@ -826,7 +916,7 @@ a { color: inherit; }
   }
   function hi(id) {
     if (!mapReady || view !== 'comparar') return;
-    D.routes.forEach(r => ['land', 'ferry', 'plane'].forEach(k => { const lid = `route-${r.id}-${k}`; if (map.getLayer(lid)) map.setPaintProperty(lid, 'line-opacity', id ? (r.id === id ? 1 : .18) : .55); }));
+    D.routes.forEach(r => ['land', 'rail', 'ferry', 'plane'].forEach(k => { const lid = `route-${r.id}-${k}`; if (map.getLayer(lid)) map.setPaintProperty(lid, 'line-opacity', id ? (r.id === id ? 1 : .18) : .55); }));
   }
   function openIdeaForm(dayEl, stop_place) {
     if (dayEl.querySelector('.idea-form')) return;

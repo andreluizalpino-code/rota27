@@ -6,6 +6,7 @@ const here = new URL('.', import.meta.url);
 const evalWindow = async (rel) => { const ctx = { window: {} }; vm.runInNewContext(await readFile(new URL(rel, here), 'utf8'), ctx); return ctx.window; };
 const payload = (await evalWindow('../data/routes.js')).ROTA27;
 payload.guia = (await evalWindow('../data/guia.js')).ROTA27_GUIA;
+payload.geo = (await evalWindow('../data/geo.js')).ROTA27_GEO;
 const json = JSON.stringify(payload);
 if (json.includes('$r27$')) throw new Error('payload contém o delimitador $r27$');
 const sql = `-- ROTA 27 · semeadura do conteúdo + guia (gerado em ${new Date().toISOString().slice(0, 10)})

@@ -395,6 +395,7 @@ a { color: inherit; }
 <script src="data/config.js"></script>
 <script src="data/routes.js"></script>
 <script src="data/guia.js"></script>
+<script src="data/geo.js"></script>
 <script>
 (() => {
   'use strict';
@@ -422,7 +423,7 @@ a { color: inherit; }
   }
   const timeCol = (dep, dur, arr) => dep ? `<div class="move__r"><div class="move__h">${dep}</div><div class="move__d">${dur}</div><div class="move__h">${arr}</div></div>` : `<div class="move__r"><div class="move__d">${dur}</div></div>`;
   function moveRow(L, n, sched, side) {
-    return `<div class="move ${side ? 'move--side' : ''}"><span class="move__n">${n}</span><span class="move__ic">${mIcon(L.mode, 'ic')}</span><div class="move__b"><div class="move__t">${side ? esc(L.note) + ' · ' : ''}${esc(P[L.from].n)} → ${esc(P[L.to].n)}</div><div class="move__c"><b>${MODEI[L.mode][1]}</b>${L.carrier ? ' · ' + esc(L.carrier) : ''}</div>${L.alt ? `<div class="move__alt">${side ? '' : 'alt. '}${esc(L.alt)}</div>` : ''}</div>${timeCol(sched && sched.dep, fmtMin(L.min), sched && sched.arr)}</div>`;
+    return `<div class="move ${side ? 'move--side' : ''}"><span class="move__n">${n}</span><span class="move__ic">${mIcon(L.mode, 'ic')}</span><div class="move__b"><div class="move__t">${side ? esc(L.note) + ' · ' : ''}${esc(P[L.from].n)} → ${esc(P[L.to].n)}</div><div class="move__c"><b>${MODEI[L.mode][1]}</b>${L.carrier ? ' · ' + esc(L.carrier) : ''}${legGeo(L) ? ` · ${legGeo(L).km} km` : ''}</div>${L.alt ? `<div class="move__alt">${side ? '' : 'alt. '}${esc(L.alt)}</div>` : ''}</div>${timeCol(sched && sched.dep, fmtMin(L.min), sched && sched.arr)}</div>`;
   }
   function flightRow(f) {
     const [dia, hora] = f.chega.split(' · ');
@@ -581,7 +582,10 @@ a { color: inherit; }
     for (let i = 0; i <= n; i++) { const t = i / n; pts.push([(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * cx + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * cy + t * t * b[1]]); }
     return pts;
   };
-  const legCoords = (L) => { const a = P[L.from], b = P[L.to]; const A = [a.lng, a.lat], B = [b.lng, b.lat]; return L.mode === 'plane' ? arc(A, B) : [A, B]; };
+  /* traçado: avião em arco; terra pelo traçado real de estrada (data/geo.js, OSRM) ligado aos alfinetes; balsa em linha reta */
+  const GEO = () => D.geo || window.ROTA27_GEO || {};
+  const legGeo = (L) => GEO()[`${L.from}>${L.to}`];
+  const legCoords = (L) => { const a = P[L.from], b = P[L.to]; const A = [a.lng, a.lat], B = [b.lng, b.lat]; if (L.mode === 'plane') return arc(A, B); const g = legGeo(L); return g && g.c.length > 1 ? [A, ...g.c, B] : [A, B]; };
   function fc(r) {
     return { type: 'FeatureCollection', features: r.legs.map((L, i) => P[L.from] && P[L.to] ? { type: 'Feature', properties: { i, mode: L.mode, side: !!L.note, route: r.id, label: `${P[L.from].n} → ${P[L.to].n} · ${MODEI[L.mode][1]} · ${fmtMin(L.min)}` }, geometry: { type: 'LineString', coordinates: legCoords(L) } } : null).filter(Boolean) };
   }
@@ -634,7 +638,11 @@ a { color: inherit; }
       LAYER_KEYS.forEach(k => { const lid = `${id}-${k}`; if (map.getLayer(lid)) { map.setLayoutProperty(lid, 'visibility', on ? 'visible' : 'none'); map.setPaintProperty(lid, 'line-opacity', view === 'comparar' ? (r.id === routeId ? 1 : .55) : (k === 'casing' ? .9 : 1)); } });
     });
   }
-  const legMid = (L) => { const cs = legCoords(L); return cs.length === 2 ? [(cs[0][0] + cs[1][0]) / 2, (cs[0][1] + cs[1][1]) / 2] : cs[cs.length >> 1]; };
+  const legMid = (L) => {
+    const cs = legCoords(L), cum = [0]; for (let i = 1; i < cs.length; i++) cum.push(cum[i - 1] + Math.hypot(cs[i][0] - cs[i - 1][0], cs[i][1] - cs[i - 1][1]));
+    const h = cum[cum.length - 1] / 2; let i = 1; while (i < cum.length - 1 && cum[i] < h) i++; const f = (h - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1);
+    return [cs[i - 1][0] + (cs[i][0] - cs[i - 1][0]) * f, cs[i - 1][1] + (cs[i][1] - cs[i - 1][1]) * f];
+  };
   function setActiveLegs(legs, color, { n0 = 1 } = {}) {
     if (!mapReady) return;
     const c = color || col(R());

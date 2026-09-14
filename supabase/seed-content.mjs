@@ -17,6 +17,7 @@ const evalWindow = async (rel) => {
 const cfg = (await evalWindow('../data/config.js')).ROTA27_CONFIG;
 const payload = (await evalWindow('../data/routes.js')).ROTA27;
 payload.guia = (await evalWindow('../data/guia.js')).ROTA27_GUIA;
+payload.geo = (await evalWindow('../data/geo.js')).ROTA27_GEO;
 if (!cfg?.supabase?.url || !cfg?.supabase?.anonKey) { console.error('Preencha data/config.js (url + anonKey).'); process.exit(1); }
 
 const rl = createInterface({ input: stdin, output: stdout });

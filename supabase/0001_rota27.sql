@@ -1,11 +1,10 @@
--- ROTA 27 · migração 0001 · schema + RLS
--- Padrão SEGURANCA.md (Flowdash): RLS em tudo, anon sem grant, autor escrito pelo banco.
--- Rodar no SQL Editor do projeto ROTA·27. Idempotente.
-
-create extension if not exists pgcrypto;
+-- ROTA 27 · migração 0001 · schema + RLS · prefixo r27_
+-- O projeto já contém o schema base do Flowdash (clients, projects, profiles, trigger handle_new_user…).
+-- Nada aqui toca nesses objetos: tudo da ROTA·27 tem prefixo r27_.
+-- Padrão SEGURANCA.md: RLS em tudo, anon sem grant, autor escrito pelo banco. Idempotente.
 
 -- ---------- perfis ----------
-create table if not exists public.profiles (
+create table if not exists public.r27_profiles (
   id           uuid primary key references auth.users(id) on delete cascade,
   display_name text not null,
   initial      text not null check (char_length(initial) = 1),
@@ -13,34 +12,43 @@ create table if not exists public.profiles (
   created_at   timestamptz not null default now()
 );
 
-create or replace function public.handle_new_user()
+create or replace function public.r27_handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, display_name, initial, role)
+  insert into public.r27_profiles (id, display_name, initial, role)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     upper(left(coalesce(new.raw_user_meta_data->>'initial', new.email), 1)),
-    coalesce(new.raw_user_meta_data->>'role', 'membro')
+    case when new.raw_user_meta_data->>'role' = 'admin' then 'admin' else 'membro' end
   )
   on conflict (id) do nothing;
   return new;
 end $$;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
+drop trigger if exists r27_on_auth_user_created on auth.users;
+create trigger r27_on_auth_user_created
   after insert on auth.users
-  for each row execute function public.handle_new_user();
+  for each row execute function public.r27_handle_new_user();
+
+-- usuários que já existirem antes desta migração
+insert into public.r27_profiles (id, display_name, initial, role)
+select u.id,
+       coalesce(u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)),
+       upper(left(coalesce(u.raw_user_meta_data->>'initial', u.email), 1)),
+       case when u.raw_user_meta_data->>'role' = 'admin' then 'admin' else 'membro' end
+from auth.users u
+on conflict (id) do nothing;
 
 -- ---------- conteúdo (roteiros) ----------
-create table if not exists public.content (
+create table if not exists public.r27_content (
   id         text primary key,
   payload    jsonb not null,
   updated_at timestamptz not null default now(),
-  updated_by uuid references public.profiles(id)
+  updated_by uuid references public.r27_profiles(id)
 );
 
-create table if not exists public.content_history (
+create table if not exists public.r27_content_history (
   id         bigserial primary key,
   content_id text not null,
   payload    jsonb not null,
@@ -48,11 +56,11 @@ create table if not exists public.content_history (
   saved_by   uuid
 );
 
-create or replace function public.content_touch()
+create or replace function public.r27_content_touch()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if tg_op = 'UPDATE' then
-    insert into public.content_history (content_id, payload, saved_at, saved_by)
+    insert into public.r27_content_history (content_id, payload, saved_at, saved_by)
     values (old.id, old.payload, old.updated_at, old.updated_by);
   end if;
   new.updated_at := now();
@@ -60,110 +68,105 @@ begin
   return new;
 end $$;
 
-drop trigger if exists content_touch on public.content;
-create trigger content_touch before insert or update on public.content
-  for each row execute function public.content_touch();
+drop trigger if exists r27_content_touch on public.r27_content;
+create trigger r27_content_touch before insert or update on public.r27_content
+  for each row execute function public.r27_content_touch();
 
 -- ---------- votos / notas / ideias ----------
-create table if not exists public.votes (
-  user_id    uuid not null references public.profiles(id) on delete cascade,
+create table if not exists public.r27_votes (
+  user_id    uuid not null references public.r27_profiles(id) on delete cascade,
   route_id   text not null,
   value      boolean not null default true,
   updated_at timestamptz not null default now(),
   primary key (user_id, route_id)
 );
 
-create table if not exists public.notes (
-  user_id    uuid primary key references public.profiles(id) on delete cascade,
+create table if not exists public.r27_notes (
+  user_id    uuid primary key references public.r27_profiles(id) on delete cascade,
   body       text not null default '',
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.ideas (
+create table if not exists public.r27_ideas (
   id         bigserial primary key,
-  user_id    uuid not null references public.profiles(id) on delete cascade,
+  user_id    uuid not null references public.r27_profiles(id) on delete cascade,
   route_id   text not null,
   stop_place text,
   kind       text not null check (kind in ('ideia','custo','hotel','duvida')),
   title      text not null check (char_length(title) between 1 and 120),
-  body       text check (char_length(body) <= 1000),
-  link       text check (link is null or link ~* '^https?://'),
+  body       text check (body is null or char_length(body) <= 1000),
+  link       text check (link is null or link = '' or link ~* '^https?://'),
   amount     numeric(12,2) check (amount is null or amount >= 0),
   currency   text not null default '€',
   created_at timestamptz not null default now()
 );
 
 -- autor sempre do banco, nunca do cliente
-create or replace function public.stamp_user()
+create or replace function public.r27_stamp_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   new.user_id := auth.uid();
-  if tg_table_name in ('votes','notes') then new.updated_at := now(); end if;
+  if tg_table_name in ('r27_votes','r27_notes') then new.updated_at := now(); end if;
   return new;
 end $$;
 
-drop trigger if exists votes_stamp on public.votes;
-create trigger votes_stamp before insert or update on public.votes for each row execute function public.stamp_user();
-drop trigger if exists notes_stamp on public.notes;
-create trigger notes_stamp before insert or update on public.notes for each row execute function public.stamp_user();
-drop trigger if exists ideas_stamp on public.ideas;
-create trigger ideas_stamp before insert on public.ideas for each row execute function public.stamp_user();
+drop trigger if exists r27_votes_stamp on public.r27_votes;
+create trigger r27_votes_stamp before insert or update on public.r27_votes for each row execute function public.r27_stamp_user();
+drop trigger if exists r27_notes_stamp on public.r27_notes;
+create trigger r27_notes_stamp before insert or update on public.r27_notes for each row execute function public.r27_stamp_user();
+drop trigger if exists r27_ideas_stamp on public.r27_ideas;
+create trigger r27_ideas_stamp before insert on public.r27_ideas for each row execute function public.r27_stamp_user();
 
 -- ---------- RLS ----------
-alter table public.profiles        enable row level security;
-alter table public.content         enable row level security;
-alter table public.content_history enable row level security;
-alter table public.votes           enable row level security;
-alter table public.notes           enable row level security;
-alter table public.ideas           enable row level security;
+alter table public.r27_profiles        enable row level security;
+alter table public.r27_content         enable row level security;
+alter table public.r27_content_history enable row level security;
+alter table public.r27_votes           enable row level security;
+alter table public.r27_notes           enable row level security;
+alter table public.r27_ideas           enable row level security;
 
--- segunda tranca: anon sem grant de tabela
-revoke all on all tables in schema public from anon;
-grant select, insert, update, delete on public.votes, public.notes, public.ideas to authenticated;
-grant select on public.profiles, public.content, public.content_history to authenticated;
-grant insert, update on public.content to authenticated;
-grant usage, select on all sequences in schema public to authenticated;
+-- segunda tranca: anon sem grant nas tabelas r27_
+revoke all on public.r27_profiles, public.r27_content, public.r27_content_history,
+              public.r27_votes, public.r27_notes, public.r27_ideas from anon;
+grant select, insert, update, delete on public.r27_votes, public.r27_notes, public.r27_ideas to authenticated;
+grant select on public.r27_profiles, public.r27_content, public.r27_content_history to authenticated;
+grant insert, update on public.r27_content to authenticated;
+grant usage, select on sequence public.r27_ideas_id_seq, public.r27_content_history_id_seq to authenticated;
 
-create or replace function public.is_admin()
+create or replace function public.r27_is_admin()
 returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+  select exists (select 1 from public.r27_profiles where id = auth.uid() and role = 'admin');
 $$;
 
-drop policy if exists profiles_read on public.profiles;
-create policy profiles_read on public.profiles for select to authenticated using (true);
+drop policy if exists r27_profiles_read on public.r27_profiles;
+create policy r27_profiles_read on public.r27_profiles for select to authenticated using (true);
 
-drop policy if exists content_read on public.content;
-create policy content_read on public.content for select to authenticated using (true);
-drop policy if exists content_write on public.content;
-create policy content_write on public.content for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists r27_content_read on public.r27_content;
+create policy r27_content_read on public.r27_content for select to authenticated using (true);
+drop policy if exists r27_content_write on public.r27_content;
+create policy r27_content_write on public.r27_content for all to authenticated using (public.r27_is_admin()) with check (public.r27_is_admin());
 
-drop policy if exists history_read on public.content_history;
-create policy history_read on public.content_history for select to authenticated using (public.is_admin());
+drop policy if exists r27_history_read on public.r27_content_history;
+create policy r27_history_read on public.r27_content_history for select to authenticated using (public.r27_is_admin());
 
-drop policy if exists votes_read on public.votes;
-create policy votes_read on public.votes for select to authenticated using (true);
-drop policy if exists votes_own on public.votes;
-create policy votes_own on public.votes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists r27_votes_read on public.r27_votes;
+create policy r27_votes_read on public.r27_votes for select to authenticated using (true);
+drop policy if exists r27_votes_own on public.r27_votes;
+create policy r27_votes_own on public.r27_votes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
-drop policy if exists notes_read on public.notes;
-create policy notes_read on public.notes for select to authenticated using (true);
-drop policy if exists notes_own on public.notes;
-create policy notes_own on public.notes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists r27_notes_read on public.r27_notes;
+create policy r27_notes_read on public.r27_notes for select to authenticated using (true);
+drop policy if exists r27_notes_own on public.r27_notes;
+create policy r27_notes_own on public.r27_notes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
-drop policy if exists ideas_read on public.ideas;
-create policy ideas_read on public.ideas for select to authenticated using (true);
-drop policy if exists ideas_insert on public.ideas;
-create policy ideas_insert on public.ideas for insert to authenticated with check (user_id = auth.uid());
-drop policy if exists ideas_own on public.ideas;
-create policy ideas_own on public.ideas for delete to authenticated using (user_id = auth.uid() or public.is_admin());
+drop policy if exists r27_ideas_read on public.r27_ideas;
+create policy r27_ideas_read on public.r27_ideas for select to authenticated using (true);
+drop policy if exists r27_ideas_insert on public.r27_ideas;
+create policy r27_ideas_insert on public.r27_ideas for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists r27_ideas_delete on public.r27_ideas;
+create policy r27_ideas_delete on public.r27_ideas for delete to authenticated using (user_id = auth.uid() or public.r27_is_admin());
 
 -- ---------- realtime ----------
-do $$ begin
-  alter publication supabase_realtime add table public.votes;
-exception when duplicate_object then null; end $$;
-do $$ begin
-  alter publication supabase_realtime add table public.notes;
-exception when duplicate_object then null; end $$;
-do $$ begin
-  alter publication supabase_realtime add table public.ideas;
-exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.r27_votes; exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.r27_notes; exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.r27_ideas; exception when duplicate_object then null; end $$;

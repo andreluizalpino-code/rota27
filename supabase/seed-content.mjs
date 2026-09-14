@@ -33,10 +33,10 @@ const auth = await fetch(`${cfg.supabase.url}/auth/v1/token?grant_type=password`
 if (!auth.ok) { console.error('Login falhou.'); process.exit(1); }
 const { access_token } = await auth.json();
 
-const res = await fetch(`${cfg.supabase.url}/rest/v1/content?on_conflict=id`, {
+const res = await fetch(`${cfg.supabase.url}/rest/v1/r27_content?on_conflict=id`, {
   method: 'POST',
   headers: { ...H, Authorization: `Bearer ${access_token}`, Prefer: 'resolution=merge-duplicates,return=minimal' },
   body: JSON.stringify({ id: 'rota27', payload })
 });
 if (!res.ok) { console.error('Falha ao gravar:', res.status, await res.text()); process.exit(1); }
-console.log(`OK · content/rota27 atualizado (${payload.routes.length} rotas, ${Object.keys(payload.places).length} lugares).`);
+console.log(`OK · r27_content/rota27 atualizado (${payload.routes.length} rotas, ${Object.keys(payload.places).length} lugares).`);

@@ -548,20 +548,24 @@ footer { border-top: 1px solid var(--border); padding: var(--sp-6) 0; color: var
       user() { const u = this.s?.user; if (!u) return null; const m = u.user_metadata || {}; return { id: u.id, initial: (m.initial || u.email[0]).toUpperCase(), name: m.name || u.email, cls: m.initial === 'R' ? 'who__chip--r' : 'who__chip--a' }; },
       async signIn(email, password) { const { error } = await this.c.auth.signInWithPassword({ email, password }); return !error; },
       async signOut() { await this.c.auth.signOut(); },
-      async loadContent() { const { data, error } = await this.c.from('content').select('payload').eq('id', 'rota27').single(); if (error) throw error; return data.payload; },
+      async loadContent() { const { data, error } = await this.c.from('r27_content').select('payload').eq('id', 'rota27').single(); if (error) throw error; return data.payload; },
       async loadState() {
-        const P = 'profiles(initial,display_name)';
+        const P = 'profiles:r27_profiles(initial,display_name)';
         const [v, n, i] = await Promise.all([
-          this.c.from('votes').select(`user_id,route_id,value,${P}`),
-          this.c.from('notes').select(`user_id,body,updated_at,${P}`),
-          this.c.from('ideas').select(`id,user_id,route_id,stop_place,kind,title,body,link,amount,currency,created_at,${P}`).order('created_at', { ascending: false })
+          this.c.from('r27_votes').select(`user_id,route_id,value,${P}`),
+          this.c.from('r27_notes').select(`user_id,body,updated_at,${P}`),
+          this.c.from('r27_ideas').select(`id,user_id,route_id,stop_place,kind,title,body,link,amount,currency,created_at,${P}`).order('created_at', { ascending: false })
         ]);
         return { votes: v.data || [], notes: n.data || [], ideas: i.data || [] };
       },
-      async setVote(route_id, value) { await this.c.from('votes').upsert({ user_id: this.user().id, route_id, value }, { onConflict: 'user_id,route_id' }); },
-      async setNote(body) { await this.c.from('notes').upsert({ user_id: this.user().id, body }, { onConflict: 'user_id' }); },
-      async addIdea(i) { await this.c.from('ideas').insert({ user_id: this.user().id, ...i }); },
-      subscribe(cb) { this.c.channel('rota27').on('postgres_changes', { event: '*', schema: 'public' }, cb).subscribe(); }
+      async setVote(route_id, value) { await this.c.from('r27_votes').upsert({ user_id: this.user().id, route_id, value }, { onConflict: 'user_id,route_id' }); },
+      async setNote(body) { await this.c.from('r27_notes').upsert({ user_id: this.user().id, body }, { onConflict: 'user_id' }); },
+      async addIdea(i) { await this.c.from('r27_ideas').insert({ user_id: this.user().id, ...i, link: i.link || null }); },
+      subscribe(cb) {
+        const ch = this.c.channel('rota27');
+        ['r27_votes', 'r27_notes', 'r27_ideas'].forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, cb));
+        ch.subscribe();
+      }
     }
   };
   const be = backends[MODE] || backends.local;

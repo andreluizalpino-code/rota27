@@ -2,3 +2,4 @@
 data/routes.js
 supabase/seed-content.sql
 .DS_Store
+supabase/fix-users.sql

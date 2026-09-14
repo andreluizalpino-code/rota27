@@ -2,349 +2,288 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ROTA 27 · Julho 2027</title>
-<meta name="description" content="Sete rotas pelo Mediterrâneo para julho de 2027. Mapa, trechos validados, comparação e decisão.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ROTA 27</title>
+<meta name="description" content="Planejamento da viagem de julho de 2027 — sete rotas, um mapa, uma decisão.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
 <style>
 /* ============================================================
-   ROTA 27 · design-mimar · carta náutica editorial
-   Claro = papel quente (padrão). Escuro = bronze grafite (alternância).
-   Base 19px · contraste para monitor de luz azul reduzida · zero hex solto.
+   ROTA 27 · v02 · app de mapa
+   Paleta "Aço gelo" (design-mimar) · UI em tinta, cor só nas rotas
+   Base 19px · contraste para monitor de luz azul reduzida
    ============================================================ */
-*, *::before, *::after {
-  margin: 0; padding: 0; box-sizing: border-box;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 :root {
   color-scheme: light;
-  --bg:        #F7F4EE;
-  --bg-2:      #FFFFFF;
-  --surface:   #F1ECE2;
-  --surface-2: #E8E1D3;
-  --border:    rgba(26,31,43,0.12);
-  --border-2:  rgba(26,31,43,0.22);
-  --text:   #1A1F2B;
-  --muted:  #4A5366;
-  --faint:  #5F6774;
-  --accent:   #9E5A1F;
-  --accent-2: #8A6414;
-  --rule:     #C8854A;
-  --pos:  #1E7A5A;
-  --warn: #8A6414;
-  --neg:  #B3261E;
-  --glass:     rgba(255,255,255,0.92);
-  --bar:       rgba(247,244,238,0.88);
-  --glow:      rgba(200,133,74,0.16);
-  --hover:     rgba(26,31,43,0.05);
-  --chip-bg:   rgba(26,31,43,0.07);
-  --meter-off: rgba(26,31,43,0.14);
-  --top-cell:  #F3EAD9;
-  --map-bg:    #EDE8DE;
-  --map-filter: sepia(.28) saturate(.85);
-  --pin-ring:  rgba(247,244,238,0.85);
-  --scrim:     rgba(26,31,43,0.55);
-
-  --font-display: "Fraunces", Georgia, serif;
-  --font-body:    "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
-  --fs-h3: 1.2rem; --fs-sec: .85rem; --fs-label: .8rem;
-  --sp-1: 8px; --sp-2: 12px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px; --sp-7: 72px; --sp-8: 112px;
-  --radius: 14px; --radius-sm: 8px;
-  --ease: 220ms cubic-bezier(.2,.7,.2,1);
-  --topbar-h: 64px; --container: 1360px;
+  --bg: #F4F6F8; --surface: #FFFFFF; --surface-2: #EEF1F4; --surface-3: #E4E8ED;
+  --line: rgba(16,21,28,0.10); --line-2: rgba(16,21,28,0.18);
+  --ink: #10151C; --ink-2: #3B4653; --ink-3: #5B6674;
+  --primary: #10151C; --on-primary: #FFFFFF;
+  --accent: #FF5722; --ok: #0F8A5F; --warn: #B45309; --neg: #C62828;
+  --glass: rgba(255,255,255,0.94); --shadow: 0 8px 28px rgba(16,21,28,0.10), 0 1px 2px rgba(16,21,28,0.06);
+  --casing: #FFFFFF; --scrim: rgba(16,21,28,0.5);
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body: "Satoshi", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --fs-sec: .85rem; --fs-label: .8rem;
+  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px; --s5: 32px; --s6: 48px;
+  --r-lg: 22px; --r: 14px; --r-sm: 10px;
+  --ease: 200ms cubic-bezier(.2,.7,.2,1);
+  --bar-h: 64px; --panel-w: 440px;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #121110; --bg-2: #1C1A18; --surface: #262320; --surface-2: #2F2B27;
-  --border: rgba(239,233,225,0.12); --border-2: rgba(239,233,225,0.20);
-  --text: #EFE9E1; --muted: rgba(239,233,225,0.82); --faint: rgba(239,233,225,0.56);
-  --accent: #C8854A; --accent-2: #E0B973; --rule: #C8854A;
-  --pos: #2FA37A; --warn: #FFC24B; --neg: #FF5C5C;
-  --glass: rgba(18,17,16,0.86); --bar: rgba(18,17,16,0.82);
-  --glow: rgba(200,133,74,0.18); --hover: rgba(239,233,225,0.04); --chip-bg: rgba(239,233,225,0.08);
-  --meter-off: rgba(239,233,225,0.14); --top-cell: #1B1712; --map-bg: #14120F;
-  --map-filter: sepia(.38) saturate(.75) brightness(.86) contrast(1.05);
-  --pin-ring: rgba(18,17,16,0.6); --scrim: rgba(0,0,0,0.6);
+  --bg: #0F1318; --surface: #161B22; --surface-2: #1D242D; --surface-3: #262E39;
+  --line: rgba(237,239,242,0.10); --line-2: rgba(237,239,242,0.20);
+  --ink: #EDEFF2; --ink-2: rgba(237,239,242,0.82); --ink-3: rgba(237,239,242,0.58);
+  --primary: #EDEFF2; --on-primary: #0F1318;
+  --glass: rgba(22,27,34,0.92); --shadow: 0 8px 28px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.4);
+  --casing: #0F1318; --scrim: rgba(0,0,0,0.6);
 }
-html { font-size: 19px; scroll-behavior: smooth; }
-body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 1rem; line-height: 1.55; text-rendering: optimizeLegibility; min-height: 100dvh; }
-img, svg { display: block; max-width: 100%; }
-a { color: inherit; }
+html { font-size: 19px; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; text-rendering: optimizeLegibility; height: 100dvh; overflow: hidden; }
+svg { display: block; }
 button, input, textarea { font: inherit; color: inherit; }
 button { background: none; border: 0; cursor: pointer; }
-a, button, .clickable { transition: color var(--ease), background var(--ease), transform var(--ease), border-color var(--ease), opacity var(--ease), box-shadow var(--ease); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.eyebrow { font-size: var(--fs-label); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-2); font-weight: 600; }
-.skip { position: absolute; left: -999px; top: 8px; background: var(--accent); color: var(--bg); padding: 8px 14px; border-radius: var(--radius-sm); z-index: 100; }
-.skip:focus { left: 12px; }
-.container { width: min(100% - 2*var(--sp-4), var(--container)); margin-inline: auto; }
-.ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-.ic--sm { width: 16px; height: 16px; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 [hidden] { display: none !important; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ic--s { width: 16px; height: 16px; }
+.lbl { font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: var(--ink-3); }
 
-/* -------- Botões -------- */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--border-2); background: var(--bg-2); font-size: var(--fs-sec); font-weight: 600; }
-.btn:hover { border-color: var(--accent); }
-.btn--primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-.btn--primary:hover { filter: brightness(1.08); }
-.btn--ghost { border-color: transparent; color: var(--muted); }
-.btn--ghost:hover { background: var(--hover); color: var(--text); }
-.btn--icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+/* ---------- controles ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); font-size: var(--fs-sec); font-weight: 700; transition: background var(--ease), border-color var(--ease), transform var(--ease); }
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: scale(.98); }
+.btn--primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.btn--primary:hover { background: var(--primary); opacity: .9; }
+.btn--ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn--ghost:hover { background: var(--surface-2); color: var(--ink); }
+.btn--icon { width: 44px; height: 44px; padding: 0; }
 .field { display: grid; gap: 6px; }
-.field label { font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
-.field input, .field textarea { width: 100%; background: var(--bg); border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 12px; font-size: var(--fs-sec); min-height: 44px; }
-.field input:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
-.field textarea { min-height: 84px; resize: vertical; }
-.seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--chip-bg); }
-.seg button { min-height: 36px; padding: 6px 14px; border-radius: 999px; font-size: var(--fs-label); font-weight: 600; color: var(--muted); }
-.seg button[aria-pressed="true"] { background: var(--bg-2); color: var(--text); box-shadow: 0 1px 0 var(--border); }
+.field label { font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); }
+.field input, .field textarea { width: 100%; min-height: 46px; padding: 11px 13px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--surface); font-size: var(--fs-sec); }
+.field input:focus, .field textarea:focus { outline: 2px solid var(--ink); outline-offset: 0; border-color: var(--ink); }
+.field textarea { min-height: 88px; resize: vertical; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface-2); }
+.seg button { min-height: 38px; padding: 6px 14px; border-radius: 999px; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(16,21,28,.12); }
 .err { color: var(--neg); font-size: var(--fs-sec); font-weight: 500; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--surface-2); font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.chip--ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+.chip--accent { background: var(--accent); color: #fff; }
+.chip--warn { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rc, var(--ink)); flex: none; }
 
-/* -------- Gate (login) -------- */
-.gate { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: var(--bg); padding: var(--sp-4); }
-.gate::before { content: ""; position: absolute; inset: 0; background: radial-gradient(900px 500px at 15% 110%, var(--glow), transparent 60%); pointer-events: none; }
-.gate__card { position: relative; width: min(100%, 420px); background: var(--bg-2); border: 1px solid var(--border-2); border-radius: var(--radius); padding: var(--sp-5); display: grid; gap: var(--sp-3); }
-.gate__card h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; letter-spacing: -.01em; }
-.gate__card h1 em { font-style: italic; font-weight: 400; color: var(--accent-2); }
-.gate__meta { color: var(--muted); font-size: var(--fs-sec); }
+/* ---------- gate ---------- */
+.gate { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: var(--bg); padding: var(--s4); }
+.gate__card { width: min(100%, 400px); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s5); display: grid; gap: var(--s3); box-shadow: var(--shadow); }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; letter-spacing: -.01em; display: inline-flex; align-items: baseline; gap: 2px; }
+.brand em { font-style: normal; color: var(--accent); }
+.gate__meta { color: var(--ink-2); font-size: var(--fs-sec); }
 
-/* -------- Topbar -------- */
-.topbar { position: sticky; top: 0; z-index: 50; height: var(--topbar-h); background: var(--bar); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
-.topbar__in { height: 100%; display: flex; align-items: center; gap: var(--sp-3); }
-.wordmark { display: flex; align-items: baseline; gap: 10px; text-decoration: none; }
-.wordmark__t { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; letter-spacing: -.01em; }
-.wordmark__t em { font-style: italic; font-weight: 400; color: var(--accent-2); }
-.wordmark__rule { width: 28px; height: 2px; background: var(--rule); }
-.nav { display: flex; gap: var(--sp-1); margin-left: auto; }
-.nav a { text-decoration: none; padding: 8px 12px; border-radius: 999px; font-size: var(--fs-sec); font-weight: 500; color: var(--muted); }
-.nav a:hover { color: var(--text); background: var(--hover); }
-.who { display: flex; gap: 6px; align-items: center; }
-.who__chip { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: .9rem; border: 1px solid var(--border-2); color: var(--text); background: var(--bg-2); }
-.who__chip--a { border-color: var(--accent); }
-.who__chip--r { border-color: var(--accent-2); }
-.who button.who__chip { cursor: pointer; }
-.who button.who__chip[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-.who__name { font-size: var(--fs-sec); color: var(--muted); }
+/* ---------- shell ---------- */
+.app { display: grid; grid-template-rows: var(--bar-h) 1fr; height: 100dvh; }
+.bar { display: flex; align-items: center; gap: var(--s2); padding: 0 var(--s3); background: var(--surface); border-bottom: 1px solid var(--line); z-index: 20; }
+.bar__spacer { flex: 1; }
+.tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface-2); }
+.tabs button { min-height: 40px; padding: 6px 16px; border-radius: 999px; font-size: var(--fs-sec); font-weight: 700; color: var(--ink-2); }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--on-primary); }
+.who { display: inline-flex; align-items: center; gap: 8px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: .9rem; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line-2); }
+.avatar--me { background: var(--ink); color: var(--on-primary); border-color: var(--ink); }
+.who button.avatar { cursor: pointer; }
+.who__name { font-size: var(--fs-sec); font-weight: 700; color: var(--ink-2); }
 
-/* -------- Hero -------- */
-.hero { position: relative; overflow: hidden; padding: var(--sp-8) 0 var(--sp-7); background: radial-gradient(1200px 600px at 8% 110%, var(--glow), transparent 60%), var(--bg); }
-.hero__grid { display: grid; grid-template-columns: 7fr 5fr; gap: var(--sp-6); align-items: start; }
-.hero h1 { font-family: var(--font-display); font-weight: 600; letter-spacing: -.02em; font-size: clamp(2.6rem, 5.2vw, 4.4rem); line-height: 1.02; margin: var(--sp-3) 0 var(--sp-4); }
-.hero h1 em { font-style: italic; font-weight: 400; color: var(--accent-2); }
-.hero__lede { max-width: 58ch; color: var(--muted); font-size: 1.05rem; }
-.facts { display: grid; grid-template-columns: repeat(4, auto); gap: var(--sp-5); margin-top: var(--sp-6); width: fit-content; }
-.fact__v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.5rem; font-weight: 600; letter-spacing: -.01em; }
-.fact__v small { font-size: .85rem; font-weight: 400; color: var(--faint); margin-left: 2px; }
-.fact__l { font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 600; margin-top: 2px; }
-.compass { position: absolute; right: -60px; bottom: -80px; width: 380px; opacity: .07; pointer-events: none; }
-.ticket { background: var(--bg-2); border: 1px solid var(--border-2); border-radius: var(--radius); overflow: hidden; position: relative; transform: rotate(-1.2deg); }
-.ticket__head { display: flex; justify-content: space-between; align-items: baseline; padding: var(--sp-3) var(--sp-4); border-bottom: 1px dashed var(--border-2); }
-.ticket__head .eyebrow { color: var(--accent); }
-.ticket__cia { font-family: var(--font-display); font-style: italic; color: var(--muted); font-size: var(--fs-sec); }
-.leg { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--sp-2); align-items: center; padding: var(--sp-3) var(--sp-4); }
-.leg + .leg { border-top: 1px dashed var(--border); }
-.leg__code { font-family: var(--font-display); font-weight: 700; font-size: 2rem; letter-spacing: -.02em; line-height: 1; }
-.leg__t { font-family: var(--font-mono); font-size: var(--fs-sec); color: var(--muted); }
-.leg__mid { text-align: center; color: var(--faint); font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; }
-.leg__mid .ic { margin: 0 auto 4px; color: var(--accent); }
-.leg > div:last-child { text-align: right; }
-.ticket__foot { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: var(--surface); }
-.ticket__price { font-family: var(--font-mono); font-size: 1.35rem; font-weight: 600; white-space: nowrap; display: flex; flex-direction: column; line-height: 1.15; }
-.ticket__price small { font-family: var(--font-body); font-size: var(--fs-label); color: var(--faint); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
-.ticket__note { font-size: var(--fs-label); color: var(--muted); text-align: right; max-width: 24ch; }
-.ticket::before, .ticket::after { content: ""; position: absolute; width: 22px; height: 22px; border-radius: 50%; background: var(--bg); left: -11px; top: 50%; transform: translateY(-50%); }
-.ticket::after { left: auto; right: -11px; }
-
-/* -------- Seções -------- */
-.section { padding: var(--sp-7) 0; }
-.section__head { display: grid; grid-template-columns: 1fr auto; gap: var(--sp-4); align-items: end; margin-bottom: var(--sp-5); }
-.section__head h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.8rem, 3vw, 2.4rem); letter-spacing: -.02em; line-height: 1.1; margin-top: var(--sp-1); }
-.section__help { color: var(--muted); font-size: var(--fs-sec); max-width: 36ch; text-align: right; }
-
-/* -------- Atlas -------- */
-.chips { display: flex; gap: var(--sp-1); flex-wrap: wrap; margin-bottom: var(--sp-4); }
-.chip { --rc: var(--accent); display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px 10px 12px; border-radius: 999px; border: 1px solid var(--border-2); background: var(--bg-2); font-size: var(--fs-sec); font-weight: 600; min-height: 44px; }
-.chip__dot { width: 12px; height: 12px; border-radius: 50%; background: var(--rc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc) 22%, transparent); }
-.chip__s { font-weight: 500; color: var(--faint); font-size: var(--fs-label); }
-.chip:hover { border-color: var(--rc); }
-.chip[aria-pressed="true"] { background: color-mix(in srgb, var(--rc) 14%, var(--bg-2)); border-color: var(--rc); }
-.chip[aria-pressed="true"] .chip__s { color: var(--muted); }
-.atlas__grid { display: grid; grid-template-columns: minmax(340px, 5fr) 7fr; gap: var(--sp-5); align-items: start; }
-.atlas__map { position: sticky; top: calc(var(--topbar-h) + var(--sp-3)); height: calc(100dvh - var(--topbar-h) - 2*var(--sp-3)); min-height: 520px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border-2); background: var(--bg-2); }
+.body { display: grid; grid-template-columns: var(--panel-w) 1fr; min-height: 0; }
+.body[data-view="comparar"] { --panel-w: 560px; }
+.panel { position: relative; background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: flex; flex-direction: column; }
+.panel__handle { display: none; }
+.stage { position: relative; min-height: 0; background: var(--surface-2); }
 #map { position: absolute; inset: 0; }
-.leaflet-tile-pane { filter: var(--map-filter); }
-.leaflet-container { background: var(--map-bg); font-family: var(--font-body); }
-.leaflet-control-attribution { background: var(--glass) !important; color: var(--faint) !important; font-size: var(--fs-label) !important; padding: 4px 8px !important; }
-.leaflet-control-attribution a { color: var(--muted) !important; }
-.leaflet-bar a { background: var(--bg-2) !important; color: var(--text) !important; border-color: var(--border-2) !important; width: 36px !important; height: 36px !important; line-height: 36px !important; font-size: 1.1rem !important; }
-.leaflet-bar a:hover { background: var(--surface) !important; }
-.map-card { position: absolute; z-index: 400; left: var(--sp-3); top: var(--sp-3); background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-2); border-left: 4px solid var(--rc, var(--accent)); border-radius: var(--radius-sm); padding: var(--sp-3) var(--sp-4); max-width: 34ch; }
-.map-card__t { font-family: var(--font-display); font-weight: 600; font-size: 1.35rem; letter-spacing: -.01em; line-height: 1.1; }
-.map-card__s { color: var(--muted); font-size: var(--fs-sec); margin-top: 2px; }
-.map-card__m { display: flex; gap: var(--sp-3); margin-top: var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-sec); color: var(--muted); }
-.map-card__m b { color: var(--text); font-weight: 600; }
-.map-legend { position: absolute; z-index: 400; left: var(--sp-3); bottom: var(--sp-3); display: flex; gap: var(--sp-3); flex-wrap: wrap; background: var(--glass); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: var(--fs-label); color: var(--muted); }
-.map-legend span { display: inline-flex; align-items: center; gap: 8px; }
-.map-legend i { display: inline-block; width: 28px; height: 0; border-top: 3px solid var(--accent); }
-.map-legend i.dash { border-top-style: dashed; }
-.map-legend i.dot { border-top-style: dotted; }
-.route { stroke-linecap: round; stroke-linejoin: round; transition: opacity 300ms ease, stroke-width 300ms ease; }
-.route--ferry { stroke-dasharray: 10 10; }
-.route--plane { stroke-dasharray: 2 9; }
-.route--hike { stroke-dasharray: 4 6; }
-.route.is-ants { animation: ants 1.6s linear infinite; }
-@keyframes ants { to { stroke-dashoffset: -40; } }
-.pin { background: none; border: 0; }
-.pin span { --rc: var(--accent); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--bg); color: var(--text); border: 2px solid var(--rc); font-family: var(--font-mono); font-size: .8rem; font-weight: 600; transform: translate(-50%, -50%); transition: transform var(--ease), background var(--ease); box-shadow: 0 0 0 4px var(--pin-ring); }
-.pin.is-current span { background: var(--rc); color: var(--bg); transform: translate(-50%, -50%) scale(1.25); }
+:root[data-theme="dark"] .maplibregl-canvas { filter: invert(1) hue-rotate(180deg) brightness(.86) contrast(.92) saturate(.6); }
+.maplibregl-ctrl-attrib { font-size: var(--fs-label) !important; background: var(--glass) !important; color: var(--ink-2) !important; }
+.maplibregl-ctrl-attrib a { color: var(--ink-2) !important; }
+.maplibregl-ctrl-group { background: var(--surface) !important; box-shadow: var(--shadow) !important; border-radius: var(--r-sm) !important; overflow: hidden; }
+.maplibregl-ctrl-group button { width: 44px !important; height: 44px !important; }
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--line) !important; }
+.maplibregl-ctrl-group button span { filter: none !important; }
+:root[data-theme="dark"] .maplibregl-ctrl-group button span { filter: invert(1) !important; }
+.maplibregl-popup-content { background: var(--surface) !important; color: var(--ink) !important; border-radius: var(--r-sm) !important; box-shadow: var(--shadow) !important; padding: 8px 12px !important; font-size: var(--fs-label); font-weight: 700; }
+.maplibregl-popup-tip { border-top-color: var(--surface) !important; }
 
-/* Diário */
-.diario { display: flex; flex-direction: column; gap: var(--sp-3); }
-.stop { --rc: var(--accent); position: relative; border: 1px solid var(--border); border-left: 4px solid var(--rc); background: var(--bg-2); border-radius: var(--radius-sm); padding: var(--sp-4); transition: background var(--ease), transform var(--ease); }
-.stop.is-current { background: var(--surface); transform: translateX(4px); }
-.stop__top { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
-.stop__n { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--rc); font-family: var(--font-mono); font-size: var(--fs-sec); font-weight: 600; }
-.stop__dates { font-family: var(--font-mono); font-size: var(--fs-sec); color: var(--muted); }
-.stop__nights { margin-left: auto; font-size: var(--fs-label); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text); background: var(--chip-bg); border-radius: 999px; padding: 4px 10px; }
-.stop--anchor .stop__nights { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); }
-.stop h3 { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-h3); letter-spacing: -.01em; margin-top: var(--sp-2); }
-.stop--anchor h3 { font-size: 1.55rem; }
-.stop--anchor h3::after { content: "Âncora"; font-family: var(--font-body); font-size: var(--fs-label); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-left: 12px; vertical-align: middle; font-weight: 600; font-style: normal; }
-.stop__in { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: var(--fs-sec); margin-top: 6px; }
-.stop__in .ic { color: var(--rc); }
-.stop__in b { font-family: var(--font-mono); color: var(--text); font-weight: 600; }
-.stop ul { margin-top: var(--sp-2); padding-left: 18px; color: var(--muted); font-size: var(--fs-sec); display: grid; gap: 4px; }
-.stop ul li::marker { color: var(--rc); }
-.stop__foot { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3); flex-wrap: wrap; }
-.ideas { display: grid; gap: 8px; margin-top: var(--sp-2); }
-.idea { display: grid; grid-template-columns: auto 1fr auto; gap: var(--sp-2); align-items: start; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); font-size: var(--fs-sec); }
-.idea__who { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: .8rem; border: 1px solid var(--border-2); background: var(--bg-2); }
-.idea__kind { font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; color: var(--accent-2); font-weight: 600; }
-.idea__t { font-weight: 600; }
-.idea__b { color: var(--muted); }
-.idea__b a { color: var(--accent); }
-.idea__amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
-.idea-form { display: grid; gap: var(--sp-2); margin-top: var(--sp-2); padding: var(--sp-3); border: 1px dashed var(--border-2); border-radius: var(--radius-sm); background: var(--bg); }
-.idea-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
-.idea-form__act { display: flex; gap: var(--sp-1); justify-content: flex-end; }
-.riscos { border: 1px dashed var(--border-2); border-radius: var(--radius-sm); padding: var(--sp-3) var(--sp-4); }
-.riscos .eyebrow { color: var(--warn); }
-.riscos ul { padding-left: 18px; margin-top: 6px; color: var(--muted); font-size: var(--fs-sec); display: grid; gap: 4px; }
+/* pins */
+.pin { --rc: var(--ink); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--ink); border: 2.5px solid var(--rc); font-family: var(--font-mono); font-size: .8rem; font-weight: 600; box-shadow: 0 2px 8px rgba(16,21,28,.25); cursor: pointer; transition: transform var(--ease), background var(--ease), color var(--ease); }
+.pin:hover { transform: scale(1.12); }
+.pin.is-active { background: var(--rc); color: #fff; transform: scale(1.25); z-index: 5; }
+.pin--gate { width: 34px; height: 34px; background: var(--ink); color: #fff; border-color: var(--surface); }
+.pin--gate .ic { width: 18px; height: 18px; }
+.pin--gate.is-active { background: var(--accent); }
+.pin--dim { opacity: .35 !important; }
 
-/* -------- Tabelas -------- */
-.trechos__sum { display: flex; gap: var(--sp-5); flex-wrap: wrap; margin-bottom: var(--sp-4); }
-.trechos__sum .fact__v { font-size: 1.3rem; }
-.modes { display: flex; gap: var(--sp-3); align-items: center; }
-.modes span { display: inline-flex; align-items: center; gap: 4px; }
-.modes .ic { color: var(--accent-2); }
-.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
-table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: var(--fs-sec); }
-th, td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
-th { font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 600; background: var(--bg-2); position: sticky; top: 0; }
-tr:last-child td { border-bottom: 0; }
-th.num, td.num { text-align: right; white-space: nowrap; }
-.mode { display: inline-flex; align-items: center; gap: 8px; }
-.mode .ic { color: var(--accent-2); }
-.tag { display: inline-block; font-size: var(--fs-label); letter-spacing: .04em; text-transform: uppercase; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--chip-bg); color: var(--muted); }
-td .alt { display: block; color: var(--faint); font-size: var(--fs-label); margin-top: 2px; }
-.cmp { min-width: 1180px; }
-.cmp th { white-space: nowrap; }
-.cmp th:first-child, .cmp td:first-child { position: sticky; left: 0; background: var(--bg); z-index: 1; min-width: 230px; }
-.cmp th:first-child { background: var(--bg-2); z-index: 2; }
-.cmp tr.is-top td { background: color-mix(in srgb, var(--rule) 8%, transparent); }
-.cmp tr.is-top td:first-child { background: var(--top-cell); }
-.cmp td.num { min-width: 260px; }
-.cmp td.num .alt { white-space: normal; text-align: right; }
-.cmp__name { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
-.cmp__name i { width: 12px; height: 12px; border-radius: 50%; background: var(--rc); flex: none; }
-.cmp__sig { color: var(--faint); font-size: var(--fs-label); margin-top: 2px; font-style: italic; font-family: var(--font-display); }
-.meter { display: inline-flex; gap: 4px; }
-.meter i { width: 10px; height: 10px; border-radius: 50%; background: var(--meter-off); }
-.meter i.on { background: var(--accent-2); }
-.meter[data-v="5"] i.on { background: var(--pos); }
-.meter[data-v="1"] i.on, .meter[data-v="2"] i.on { background: var(--warn); }
-.badge { display: inline-block; font-size: var(--fs-label); letter-spacing: .04em; text-transform: uppercase; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-2); color: var(--muted); white-space: nowrap; }
-.badge--recomendado { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-.badge--finalista { border-color: var(--accent-2); color: var(--accent-2); }
-.badge--surpresa { border-color: var(--pos); color: var(--pos); }
-.bento { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--sp-3); margin-top: var(--sp-5); }
-.bento__c { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--sp-4); background: var(--bg-2); }
-.bento__c:first-child { background: linear-gradient(135deg, var(--glow), transparent 60%), var(--bg-2); border-color: var(--border-2); }
-.bento__c h3 { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-h3); margin-top: 6px; }
-.bento__c:first-child h3 { font-size: 1.6rem; }
-.bento__c p { color: var(--muted); font-size: var(--fs-sec); margin-top: var(--sp-1); }
+/* overlays no mapa */
+.map-top { position: absolute; z-index: 10; left: var(--s3); top: var(--s3); right: 64px; display: flex; gap: var(--s2); align-items: flex-start; pointer-events: none; }
+.map-top > * { pointer-events: auto; }
+.route-card { background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 16px; box-shadow: var(--shadow); max-width: 42ch; }
+.route-card__t { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; line-height: 1.15; display: flex; align-items: center; gap: 10px; }
+.route-card__s { color: var(--ink-2); font-size: var(--fs-sec); margin-top: 2px; }
+.map-actions { position: absolute; z-index: 10; right: var(--s3); bottom: 120px; display: grid; gap: 8px; }
+.map-actions .btn { box-shadow: var(--shadow); }
+.legend { position: absolute; z-index: 10; left: var(--s3); bottom: var(--s3); display: flex; gap: var(--s3); background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); box-shadow: var(--shadow); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 26px; height: 0; border-top: 3px solid var(--ink); }
+.legend i.dash { border-top-style: dashed; }
+.legend i.dot { border-top-style: dotted; }
 
-/* -------- Decidir -------- */
-.vote { display: grid; grid-template-columns: 3fr 2fr; gap: var(--sp-4); align-items: start; }
-.vote__p { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-2); padding: var(--sp-4); }
-.vote__h { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
-.vote__h h3 { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-h3); }
-.vote__grid { display: grid; grid-template-columns: 1fr auto auto; gap: 6px var(--sp-3); align-items: center; }
-.vote__grid > .vh { font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 600; text-align: center; }
-.vote__row { display: contents; }
-.vote__name { display: flex; align-items: center; gap: var(--sp-2); padding: 8px 10px; border-radius: var(--radius-sm); font-size: var(--fs-sec); font-weight: 500; }
-.vote__name i { width: 10px; height: 10px; border-radius: 50%; background: var(--rc); }
-.heart { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--border-2); color: var(--faint); margin: 0 auto; }
+/* ---------- painel: cabeçalho da rota ---------- */
+.rh { padding: var(--s3) var(--s3) var(--s2); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 3; }
+.rsel { position: relative; }
+.rsel__btn { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px 8px 14px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); text-align: left; }
+.rsel__btn:hover { background: var(--surface-2); }
+.rsel__txt { flex: 1; min-width: 0; }
+.rsel__name, .rsel__sub { display: block; }
+.rsel__name { font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; line-height: 1.1; }
+.rsel__sub { color: var(--ink-2); font-size: var(--fs-label); font-weight: 500; margin-top: 2px; }
+.rsel__chev { margin-left: auto; color: var(--ink-3); transition: transform var(--ease); }
+.rsel[data-open="true"] .rsel__chev { transform: rotate(180deg); }
+.rsel__list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--r); box-shadow: var(--shadow); padding: 6px; z-index: 30; display: grid; gap: 2px; transform-origin: top; animation: pop 160ms var(--ease) both; }
+@keyframes pop { from { opacity: 0; transform: scale(.98) translateY(-4px); } to { opacity: 1; transform: none; } }
+.rsel__opt { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 10px; border-radius: var(--r-sm); text-align: left; width: 100%; }
+.rsel__opt:hover, .rsel__opt:focus-visible { background: var(--surface-2); outline: none; }
+.rsel__opt[aria-selected="true"] { background: var(--surface-2); }
+.rsel__opt b { font-weight: 700; font-size: var(--fs-sec); }
+.rsel__opt small { display: block; color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
+.stats { display: flex; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s2); }
+.stat { display: flex; flex-direction: column; }
+.stat b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.05rem; font-weight: 600; }
+.stat span { font-size: var(--fs-label); color: var(--ink-3); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+
+/* ---------- linha do tempo ---------- */
+.tl { padding: var(--s2) 0 var(--s6); }
+.day { position: relative; display: grid; grid-template-columns: 64px 1fr; gap: 0 var(--s2); padding: var(--s3) var(--s3) var(--s3) 0; border-left: 4px solid transparent; transition: background var(--ease), border-color var(--ease); cursor: pointer; }
+.day:hover { background: var(--surface-2); }
+.day.is-active { background: color-mix(in srgb, var(--rc) 7%, var(--surface)); border-left-color: var(--rc); }
+.day__date { text-align: center; padding-top: 2px; }
+.day__num { font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; line-height: 1; }
+.day__wd { font-size: var(--fs-label); font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+.day__idx { display: inline-block; margin-top: 8px; font-family: var(--font-mono); font-size: .75rem; font-weight: 600; color: var(--ink-3); background: var(--surface-2); border-radius: 999px; padding: 2px 7px; }
+.day.is-active .day__idx { background: var(--rc); color: #fff; }
+.day__body { min-width: 0; }
+.day__kind { font-size: var(--fs-label); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+.day__kind .ic { color: var(--rc); }
+.day__title { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; line-height: 1.15; margin-top: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.day__title .chip { height: 24px; font-size: .75rem; }
+.moves { display: grid; gap: 6px; margin-top: 10px; }
+.move { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-sec); }
+.move .ic { color: var(--rc); }
+.move__t { font-weight: 700; }
+.move__c { color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
+.move__d { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
+.move--side { background: transparent; border: 1px dashed var(--line-2); }
+.day ul { margin-top: 10px; padding-left: 18px; color: var(--ink-2); font-size: var(--fs-sec); display: grid; gap: 4px; }
+.day ul li::marker { color: var(--rc); }
+.day__foot { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.ideas { display: grid; gap: 8px; margin-top: 10px; }
+.idea { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface); font-size: var(--fs-sec); }
+.idea__kind { font-size: var(--fs-label); font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+.idea__t { font-weight: 700; }
+.idea__b { color: var(--ink-2); }
+.idea__b a { color: var(--ink); font-weight: 700; }
+.idea__amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.avatar--xs { width: 28px; height: 28px; font-size: .75rem; }
+.idea-form { display: grid; gap: 10px; margin-top: 10px; padding: 12px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); }
+.idea-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.idea-form__act { display: flex; gap: 8px; justify-content: flex-end; }
+.risks { margin: var(--s2) var(--s3) 0; padding: 12px 14px; border-radius: var(--r); border: 1px dashed var(--line-2); }
+.risks .lbl { color: var(--warn); }
+.risks ul { padding-left: 18px; margin-top: 6px; color: var(--ink-2); font-size: var(--fs-sec); display: grid; gap: 4px; }
+
+/* ---------- trechos ---------- */
+.legs { padding: var(--s2) var(--s3) var(--s6); display: grid; gap: 8px; }
+.legrow { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface); cursor: pointer; transition: background var(--ease), border-color var(--ease); }
+.legrow:hover, .legrow.is-active { background: color-mix(in srgb, var(--rc) 7%, var(--surface)); border-color: var(--rc); }
+.legrow .ic { color: var(--rc); }
+.legrow__t { font-weight: 700; font-size: var(--fs-sec); }
+.legrow__c { color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
+.legrow__d { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
+.legrow__n { font-family: var(--font-mono); font-size: .75rem; color: var(--ink-3); text-align: center; }
+
+/* ---------- comparar ---------- */
+.cmp { padding: var(--s3); display: grid; gap: var(--s3); }
+.cmp__intro { color: var(--ink-2); font-size: var(--fs-sec); }
+.card { --rc: var(--ink); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: var(--s3); position: relative; overflow: hidden; transition: border-color var(--ease), box-shadow var(--ease); }
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--rc); }
+.card:hover { border-color: var(--rc); box-shadow: var(--shadow); }
+.card--top { border-color: var(--ink); }
+.card__h { display: flex; align-items: flex-start; gap: 10px; padding-left: 8px; }
+.card__name { font-family: var(--font-display); font-weight: 600; font-size: 1.25rem; line-height: 1.1; }
+.card__sub { color: var(--ink-2); font-size: var(--fs-label); font-weight: 500; margin-top: 2px; }
+.card__sig { font-style: italic; color: var(--ink-2); font-size: var(--fs-sec); margin: 8px 0 0 8px; }
+.card__stats { display: flex; gap: var(--s3); flex-wrap: wrap; margin: 12px 0 0 8px; }
+.crit { display: grid; gap: 6px; margin: 14px 0 0 8px; }
+.crit__row { display: grid; grid-template-columns: 1fr 120px 24px; gap: 10px; align-items: center; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); }
+.meter { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.meter i { display: block; height: 100%; width: calc(var(--v) * 20%); background: var(--rc); border-radius: 999px; }
+.meter[data-v="1"] i, .meter[data-v="2"] i { background: var(--warn); }
+.crit__v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; color: var(--ink); }
+.card__act { display: flex; gap: 8px; margin: 14px 0 0 8px; flex-wrap: wrap; }
+.card__risk { color: var(--ink-3); font-size: var(--fs-label); margin: 10px 0 0 8px; }
+
+/* ---------- decidir ---------- */
+.dec { padding: var(--s3); display: grid; gap: var(--s4); }
+.dec h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin-bottom: 8px; }
+.votes { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: center; }
+.votes .vh { text-align: center; }
+.vrow { display: contents; }
+.vname { display: flex; align-items: center; gap: 10px; padding: 8px 6px; font-size: var(--fs-sec); font-weight: 700; }
+.heart { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-2); color: var(--ink-3); margin: 0 auto; background: var(--surface); }
 .heart:not([disabled]):hover { border-color: var(--accent); color: var(--accent); }
-.heart[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
-.heart[disabled] { cursor: default; opacity: .9; }
-.heart .ic { width: 18px; height: 18px; }
+.heart[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 .heart[aria-pressed="true"] .ic { fill: currentColor; }
-.notes { display: grid; gap: var(--sp-3); }
-.note-card { padding: var(--sp-3); border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); font-size: var(--fs-sec); }
-.note-card__h { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-weight: 600; }
-.note-card p { color: var(--muted); white-space: pre-wrap; }
-.note { border-left: 3px solid var(--accent); padding: var(--sp-2) var(--sp-3); color: var(--muted); font-size: var(--fs-sec); margin-top: var(--sp-4); background: color-mix(in srgb, var(--rule) 6%, transparent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.heart[disabled] { cursor: default; }
+.notecard { padding: 12px 14px; border-radius: var(--r); background: var(--surface-2); font-size: var(--fs-sec); }
+.notecard__h { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 4px; }
+.notecard p { color: var(--ink-2); white-space: pre-wrap; }
+.inbox { display: grid; gap: 10px; }
+.inbox__g { font-size: var(--fs-label); font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; margin-top: 6px; }
+.empty { color: var(--ink-3); font-size: var(--fs-sec); }
+.foot { padding: var(--s3); color: var(--ink-3); font-size: var(--fs-label); border-top: 1px solid var(--line); }
 
-/* -------- Footer -------- */
-footer { border-top: 1px solid var(--border); padding: var(--sp-6) 0; color: var(--muted); font-size: var(--fs-sec); }
-.foot { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
-.foot ul { padding-left: 18px; margin-top: 6px; display: grid; gap: 4px; }
-.foot .alert { border: 1px solid var(--warn); border-radius: var(--radius-sm); padding: var(--sp-3); color: var(--text); background: color-mix(in srgb, var(--warn) 7%, transparent); }
-
-@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.reveal { animation: rise 460ms var(--ease) both; }
-.reveal:nth-child(2) { animation-delay: 70ms; }
-.reveal:nth-child(3) { animation-delay: 140ms; }
-.reveal:nth-child(4) { animation-delay: 210ms; }
-
-@media (max-width: 1100px) {
-  .hero__grid { grid-template-columns: 1fr; }
-  .ticket { transform: none; max-width: 560px; }
-  .atlas__grid { grid-template-columns: 1fr; }
-  .atlas__map { position: sticky; top: var(--topbar-h); height: 46dvh; min-height: 380px; order: -1; }
-  .facts { grid-template-columns: repeat(2, auto); gap: var(--sp-4); }
-  .section__head { grid-template-columns: 1fr; }
-  .section__help { text-align: left; max-width: 60ch; }
-  .bento { grid-template-columns: 1fr; }
-  .vote { grid-template-columns: 1fr; }
-  .foot { grid-template-columns: 1fr; }
+/* ---------- mobile: bottom sheet ---------- */
+@media (max-width: 900px) {
+  :root { --bar-h: 112px; }
+  .app { grid-template-rows: var(--bar-h) 1fr; }
+  .bar { flex-wrap: wrap; padding: 10px var(--s3) 8px; row-gap: 8px; align-content: center; }
+  .bar__spacer:first-of-type { flex: 1; }
+  .bar__spacer:last-of-type { display: none; }
+  .tabs { order: 10; width: 100%; justify-content: space-between; }
+  .tabs button { flex: 1; padding: 6px 4px; font-size: var(--fs-label); }
+  .rsel__btn > .chip { display: none; }
+  .who__name { display: none; }
+  .body, .body[data-view="comparar"] { grid-template-columns: 1fr; grid-template-rows: 1fr; position: relative; }
+  .stage { position: absolute; inset: 0; }
+  .panel { position: absolute; left: 0; right: 0; bottom: 0; height: 54dvh; border-right: 0; border-top: 1px solid var(--line); border-radius: var(--r-lg) var(--r-lg) 0 0; box-shadow: 0 -10px 30px rgba(16,21,28,.18); transition: height 260ms var(--ease); z-index: 15; }
+  .panel[data-sheet="full"] { height: calc(100dvh - var(--bar-h) - 12px); }
+  .panel[data-sheet="peek"] { height: 132px; overflow: hidden; }
+  .panel__handle { display: grid; place-items: center; height: 26px; flex: none; cursor: grab; touch-action: none; position: sticky; top: 0; background: var(--surface); z-index: 4; }
+  .panel__handle i { width: 44px; height: 5px; border-radius: 999px; background: var(--line-2); }
+  .rh { top: 26px; }
+  .map-actions { bottom: calc(54dvh + 12px); transition: bottom 260ms var(--ease); }
+  .legend { display: none; }
+  .map-top { right: var(--s3); }
+  .route-card { display: none; }
+  .day { grid-template-columns: 56px 1fr; }
   .idea-form__row { grid-template-columns: 1fr; }
 }
-@media (max-width: 720px) {
-  .nav { display: none; }
-  .hero { padding: var(--sp-6) 0; }
-  .leg__code { font-size: 1.6rem; }
-  .map-card { max-width: 26ch; }
-  .map-legend { display: none; }
-  .who__name { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .reveal { animation: none; }
-  .route.is-ants { animation: none; }
-  *, *::before, *::after { transition: none !important; }
-  html { scroll-behavior: auto; }
-}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
-<a class="skip" href="#mapa">Pular para o mapa</a>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-plane" viewBox="0 0 24 24"><path d="M2.5 19h19"/><path d="M4 13.5l4.5 1.5 3-3.5 5.5 2.5 1.5-1.5-4.5-4 1.5-3.5-1.5-1.5-4 2.5L6.5 5 5 6.5l2.5 3.5-3 3z"/></symbol>
@@ -353,140 +292,69 @@ footer { border-top: 1px solid var(--border); padding: var(--sp-6) 0; color: var
   <symbol id="i-ferry" viewBox="0 0 24 24"><path d="M3 17c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0"/><path d="M4 14l1.5-5h13L20 14"/><path d="M8 9V5h8v4"/><path d="M12 5V3"/></symbol>
   <symbol id="i-car" viewBox="0 0 24 24"><path d="M5 16l1.5-6h11L19 16"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="16.5" cy="19" r="1.5"/></symbol>
   <symbol id="i-hike" viewBox="0 0 24 24"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-7 3 2v5M11 14l-1-4 3-1 2 3 3 1M8 10l3-1"/></symbol>
+  <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18V8M3 14h18v4M3 14V11a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3M12 12h7a2 2 0 0 1 2 2"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
 </svg>
 
-<!-- ================= GATE (login) ================= -->
 <div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateTitle">
-  <form class="gate__card" id="gateForm" autocomplete="on">
-    <h1 id="gateTitle">ROTA<em>·27</em></h1>
+  <form class="gate__card" id="gateForm">
+    <div class="brand" id="gateTitle">ROTA<em>·27</em></div>
     <p class="gate__meta">Julho de 2027 · acesso restrito.</p>
     <div class="field"><label for="gEmail">E-mail</label><input id="gEmail" type="email" autocomplete="username" required></div>
-    <div class="field"><label for="gPass">Senha</label><input id="gPass" type="password" autocomplete="current-password" minlength="12" required></div>
+    <div class="field"><label for="gPass">Senha</label><input id="gPass" type="password" autocomplete="current-password" required></div>
     <p class="err" id="gateErr" hidden>E-mail ou senha incorretos.</p>
     <button class="btn btn--primary" type="submit" id="gateBtn">Entrar</button>
   </form>
 </div>
 
-<header class="topbar">
-  <div class="container topbar__in">
-    <a class="wordmark" href="#inicio" aria-label="ROTA 27, início">
-      <span class="wordmark__t">ROTA<em>·27</em></span>
-      <span class="wordmark__rule" aria-hidden="true"></span>
-    </a>
-    <nav class="nav" aria-label="Seções">
-      <a href="#mapa">Mapa</a><a href="#trechos">Trechos</a><a href="#comparar">Comparar</a><a href="#decidir">Decidir</a>
+<div class="app" id="app" hidden>
+  <header class="bar">
+    <div class="brand" aria-label="ROTA 27">ROTA<em>·27</em></div>
+    <div class="bar__spacer"></div>
+    <nav class="tabs" role="tablist" aria-label="Vistas" id="tabs">
+      <button role="tab" aria-selected="true" data-view="roteiro">Roteiro</button>
+      <button role="tab" aria-selected="false" data-view="trechos">Trechos</button>
+      <button role="tab" aria-selected="false" data-view="comparar">Comparar</button>
+      <button role="tab" aria-selected="false" data-view="decidir">Decidir</button>
     </nav>
-    <div class="who" id="who" aria-label="Quem está usando"></div>
-    <button class="btn btn--icon btn--ghost" id="themeBtn" type="button" aria-label="Alternar tema"><svg class="ic"><use href="#i-moon"/></svg></button>
+    <div class="bar__spacer"></div>
+    <div class="who" id="who"></div>
+    <button class="btn btn--icon btn--ghost" id="themeBtn" type="button" aria-label="Tema"></button>
     <button class="btn btn--icon btn--ghost" id="outBtn" type="button" aria-label="Sair" hidden><svg class="ic"><use href="#i-out"/></svg></button>
+  </header>
+
+  <div class="body" id="body" data-view="roteiro">
+    <aside class="panel" id="panel" data-sheet="half">
+      <div class="panel__handle" id="handle" aria-hidden="true"><i></i></div>
+      <div id="panelContent"></div>
+      <div class="foot" id="foot"></div>
+    </aside>
+    <div class="stage">
+      <div id="map" role="region" aria-label="Mapa"></div>
+      <div class="map-top"><div class="route-card" id="routeCard"></div></div>
+      <div class="map-actions">
+        <button class="btn btn--icon" id="fitBtn" type="button" aria-label="Ver rota inteira" title="Ver rota inteira"><svg class="ic"><use href="#i-fit"/></svg></button>
+      </div>
+      <div class="legend" aria-hidden="true"><span><i></i>terra</span><span><i class="dash"></i>balsa</span><span><i class="dot"></i>avião</span></div>
+    </div>
   </div>
-</header>
+</div>
 
-<main id="app" hidden>
-  <section class="hero" id="inicio">
-    <svg class="compass" viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
-      <circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="70"/><circle cx="100" cy="100" r="6"/>
-      <path d="M100 4v192M4 100h192M32 32l136 136M168 32L32 168"/><path d="M100 30l10 60-10 10-10-10z" fill="currentColor"/>
-    </svg>
-    <div class="container hero__grid">
-      <div>
-        <p class="eyebrow reveal" id="heroEyebrow"></p>
-        <h1 class="reveal">Sete rotas.<br><em>Uma decisão.</em></h1>
-        <p class="hero__lede reveal">Todos os trechos validados no Rome2Rio. Passagem internacional cotada. O que falta é escolher — e este mapa existe para isso.</p>
-        <div class="facts reveal" role="list" id="facts"></div>
-      </div>
-      <aside class="ticket reveal" aria-label="Bilhete âncora" id="ticket"></aside>
-    </div>
-  </section>
-
-  <section class="section" id="mapa">
-    <div class="container">
-      <div class="section__head">
-        <div><p class="eyebrow">Atlas</p><h2>Cada rota é uma linha no mar.</h2></div>
-        <p class="section__help">Escolha uma rota. Role o diário — o mapa acompanha cada base.</p>
-      </div>
-      <div class="chips" id="chips" role="group" aria-label="Rotas"></div>
-      <div class="atlas__grid">
-        <div><div class="diario" id="diario" aria-live="polite"></div></div>
-        <div class="atlas__map">
-          <div id="map" role="region" aria-label="Mapa das rotas"></div>
-          <div class="map-card" id="mapCard"></div>
-          <div class="map-legend" aria-hidden="true"><span><i></i>terra</span><span><i class="dash"></i>balsa</span><span><i class="dot"></i>avião</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="trechos">
-    <div class="container">
-      <div class="section__head">
-        <div><p class="eyebrow">Trechos · Rome2Rio</p><h2>O manifesto de <span id="trechosNome">—</span>.</h2></div>
-        <p class="section__help">Durações porta a porta, set/2026. Horários de jul/2027 ainda não publicados — validar a partir de fev/2027.</p>
-      </div>
-      <div class="trechos__sum" id="trechosSum"></div>
-      <div class="tbl-wrap"><table id="trechosTbl"><thead><tr><th class="num">#</th><th>Trecho</th><th>Modo</th><th class="num">Duração</th><th>Operador</th><th>Alternativa</th></tr></thead><tbody></tbody></table></div>
-    </div>
-  </section>
-
-  <section class="section" id="comparar">
-    <div class="container">
-      <div class="section__head">
-        <div><p class="eyebrow">Comparar</p><h2>Sete critérios. Sem empate.</h2></div>
-        <p class="section__help">Notas de 1 a 5 nos filtros de vocês: calor só com mar, âncora, mergulho, Istambul, custo, surpresa, logística.</p>
-      </div>
-      <div class="tbl-wrap"><table class="cmp" id="cmpTbl"><thead></thead><tbody></tbody></table></div>
-      <div class="bento">
-        <div class="bento__c"><p class="eyebrow">Se mergulho pesar</p><h3>Fogo e Mar</h3><p>Fumarolas submarinas em Panarea, Open Water em Malta, Stromboli à noite. Istambul direto. O único desenho onde as três condições novas se encaixam sem custo de roteiro.</p></div>
-        <div class="bento__c"><p class="eyebrow">Se paisagem terrestre pesar</p><h3>Épiro</h3><p>Meteora, Vikos, Aqueronte, Antipaxos. A maior densidade de "só aqui" por dia — e conecta a Grécia.</p></div>
-        <div class="bento__c"><p class="eyebrow">Se custo e ineditismo pesarem</p><h3>Albânia Vertical</h3><p>Metade do custo, ninguém esteve lá. Koman, Theth, Gjipe. Tirana→Istambul direto.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="decidir">
-    <div class="container">
-      <div class="section__head">
-        <div><p class="eyebrow">Decidir</p><h2>Dois votos. Uma rota.</h2></div>
-        <p class="section__help" id="decidirHelp"></p>
-      </div>
-      <div class="vote">
-        <div class="vote__p">
-          <div class="vote__h"><h3>Votos</h3></div>
-          <div class="vote__grid" id="voteGrid"></div>
-        </div>
-        <div class="vote__p">
-          <div class="vote__h"><h3>Notas</h3></div>
-          <div class="notes" id="notes"></div>
-          <div class="field" style="margin-top:var(--sp-3)"><label for="noteMine">Sua nota</label><textarea id="noteMine" placeholder="O que pesa pra você?"></textarea></div>
-          <div class="idea-form__act" style="margin-top:8px"><button class="btn" type="button" id="noteSave">Salvar nota</button></div>
-        </div>
-      </div>
-      <p class="note" id="decidirNote"></p>
-    </div>
-  </section>
-</main>
-
-<footer id="foot" hidden>
-  <div class="container foot">
-    <div>
-      <p class="eyebrow">Fontes</p><ul id="fontes"></ul>
-      <p style="margin-top:16px;color:var(--faint);font-size:var(--fs-label)">v0.2 · gerado em 14/09/2026 · <span id="modeLabel" class="mono"></span></p>
-    </div>
-    <div class="alert" id="alerta"></div>
-  </div>
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
 <script src="data/config.js"></script>
 <script src="data/routes.js"></script>
 <script>
 (() => {
+  'use strict';
   const CFG = window.ROTA27_CONFIG || { backend: 'local' };
   const qs = new URLSearchParams(location.search);
   const MODE = qs.get('backend') || CFG.backend || 'local';
@@ -495,46 +363,39 @@ footer { border-top: 1px solid var(--border); padding: var(--sp-6) 0; color: var
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
-  const MODEI = { plane: ['i-plane', 'avião'], train: ['i-train', 'trem'], bus: ['i-bus', 'ônibus'], ferry: ['i-ferry', 'balsa'], car: ['i-car', 'carro'], hike: ['i-hike', 'a pé'] };
   const icon = (id, cls = 'ic') => `<svg class="${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+  const MODEI = { plane: ['i-plane', 'avião'], train: ['i-train', 'trem'], bus: ['i-bus', 'ônibus'], ferry: ['i-ferry', 'balsa'], car: ['i-car', 'carro'], hike: ['i-hike', 'a pé'] };
   const mIcon = (m, cls) => icon(MODEI[m][0], cls);
   const fmtMin = (m) => { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h}h${String(mm).padStart(2, '0')}` : `${mm} min`; };
   const KINDS = { ideia: 'Ideia', custo: 'Custo', hotel: 'Hotel', duvida: 'Dúvida' };
-  const PEOPLE = { andre: { initial: 'A', name: 'André', cls: 'who__chip--a' }, rapha: { initial: 'R', name: 'Raphaella', cls: 'who__chip--r' } };
+  const PEOPLE = { andre: { initial: 'A', name: 'André' }, rapha: { initial: 'R', name: 'Raphaella' } };
+  const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  const PALETTE = {
+    fogo:     ['#D93B2B', '#F0644F'], epiro:    ['#0E8C7F', '#3FBFAF'], albania:  ['#5A8A16', '#9CCB3D'],
+    dalmata:  ['#2F6BE0', '#6B9BFF'], vertical: ['#7A3FE0', '#B08CFF'], egeu:     ['#C77700', '#F2B84B'], jonico: ['#D1367A', '#F27BB0']
+  };
+  const STATUS = { recomendado: 'chip--accent', finalista: 'chip--ok', surpresa: 'chip--ok', sobrevivente: '', fria: '', condicional: 'chip--warn' };
 
-  /* ---------- Estado ---------- */
+  /* ---------- estado ---------- */
   let D = null, P = null, S = { votes: [], notes: [], ideas: [] };
-  let map = null, tiles = [], layers = {}, active = null, currentStop = -1, scrollArmed = false, observer = null;
-
-  /* ---------- Tema ---------- */
+  let map = null, mapReady = false, markers = [], routeId = null, view = 'roteiro', days = [], dayIdx = -1, legIdx = -1, antsTimer = null;
   const theme = () => load('rota27.theme', 'light');
-  function applyTheme(t, rerender) {
-    document.documentElement.dataset.theme = t;
-    $('#themeBtn').innerHTML = icon(t === 'dark' ? 'i-sun' : 'i-moon');
-    $('#themeBtn').setAttribute('aria-label', t === 'dark' ? 'Tema claro' : 'Tema escuro');
-    store('rota27.theme', t);
-    if (map) swapTiles(t);
-    if (rerender && D) rerenderAll();
-  }
-  $('#themeBtn').addEventListener('click', () => applyTheme(theme() === 'dark' ? 'light' : 'dark', true));
-  applyTheme(theme(), false);
-  const col = (r) => theme() === 'dark' ? (r.corDark || r.cor) : r.cor;
+  const col = (r) => (PALETTE[r.id] || ['#10151C', '#EDEFF2'])[theme() === 'dark' ? 1 : 0];
+  const R = () => D.routes.find(r => r.id === routeId);
 
-  /* ---------- Backends ---------- */
+  /* ---------- backends ---------- */
   const loadScript = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
   const backends = {
     local: {
-      needsAuth: false,
-      async init() {},
+      needsAuth: false, async init() {},
       user() { const w = load('rota27.who', 'andre'); return { id: w, ...PEOPLE[w] }; },
-      setWho(w) { store('rota27.who', w); },
-      async signOut() {},
-      async loadContent() { if (!window.ROTA27) throw new Error('data/routes.js ausente'); return window.ROTA27; },
+      setWho(w) { store('rota27.who', w); }, async signOut() {},
+      async loadContent() { if (!window.ROTA27) throw new Error('routes.js'); return window.ROTA27; },
       async loadState() { return { votes: load('rota27.votes', []), notes: load('rota27.notes', []), ideas: load('rota27.ideas', []) }; },
-      _prof(u) { return { initial: u.initial, display_name: u.name }; },
-      async setVote(route_id, value) { const u = this.user(); const v = load('rota27.votes', []).filter(x => !(x.user_id === u.id && x.route_id === route_id)); v.push({ user_id: u.id, route_id, value, profiles: this._prof(u) }); store('rota27.votes', v); },
-      async setNote(body) { const u = this.user(); const n = load('rota27.notes', []).filter(x => x.user_id !== u.id); n.push({ user_id: u.id, body, updated_at: new Date().toISOString(), profiles: this._prof(u) }); store('rota27.notes', n); },
-      async addIdea(i) { const u = this.user(); const a = load('rota27.ideas', []); a.unshift({ id: Date.now(), user_id: u.id, created_at: new Date().toISOString(), profiles: this._prof(u), ...i }); store('rota27.ideas', a); },
+      _p(u) { return { initial: u.initial, display_name: u.name }; },
+      async setVote(route_id, value) { const u = this.user(); const v = load('rota27.votes', []).filter(x => !(x.user_id === u.id && x.route_id === route_id)); v.push({ user_id: u.id, route_id, value, profiles: this._p(u) }); store('rota27.votes', v); },
+      async setNote(body) { const u = this.user(); const n = load('rota27.notes', []).filter(x => x.user_id !== u.id); n.push({ user_id: u.id, body, profiles: this._p(u) }); store('rota27.notes', n); },
+      async addIdea(i) { const u = this.user(); const a = load('rota27.ideas', []); a.unshift({ id: Date.now(), user_id: u.id, created_at: new Date().toISOString(), profiles: this._p(u), ...i }); store('rota27.ideas', a); },
       subscribe(cb) { window.addEventListener('storage', cb); }
     },
     supabase: {
@@ -545,275 +406,389 @@ footer { border-top: 1px solid var(--border); padding: var(--sp-6) 0; color: var
         const { data } = await this.c.auth.getSession(); this.s = data.session;
         this.c.auth.onAuthStateChange((_e, s) => { this.s = s; });
       },
-      user() { const u = this.s?.user; if (!u) return null; const m = u.user_metadata || {}; return { id: u.id, initial: (m.initial || u.email[0]).toUpperCase(), name: m.name || u.email, cls: m.initial === 'R' ? 'who__chip--r' : 'who__chip--a' }; },
+      user() { const u = this.s?.user; if (!u) return null; const m = u.user_metadata || {}; return { id: u.id, initial: (m.initial || u.email[0]).toUpperCase(), name: m.name || u.email }; },
       async signIn(email, password) { const { error } = await this.c.auth.signInWithPassword({ email, password }); return !error; },
       async signOut() { await this.c.auth.signOut(); },
       async loadContent() { const { data, error } = await this.c.from('r27_content').select('payload').eq('id', 'rota27').single(); if (error) throw error; return data.payload; },
       async loadState() {
-        const P = 'profiles:r27_profiles(initial,display_name)';
+        const Pf = 'profiles:r27_profiles(initial,display_name)';
         const [v, n, i] = await Promise.all([
-          this.c.from('r27_votes').select(`user_id,route_id,value,${P}`),
-          this.c.from('r27_notes').select(`user_id,body,updated_at,${P}`),
-          this.c.from('r27_ideas').select(`id,user_id,route_id,stop_place,kind,title,body,link,amount,currency,created_at,${P}`).order('created_at', { ascending: false })
+          this.c.from('r27_votes').select(`user_id,route_id,value,${Pf}`),
+          this.c.from('r27_notes').select(`user_id,body,updated_at,${Pf}`),
+          this.c.from('r27_ideas').select(`id,user_id,route_id,stop_place,kind,title,body,link,amount,currency,created_at,${Pf}`).order('created_at', { ascending: false })
         ]);
         return { votes: v.data || [], notes: n.data || [], ideas: i.data || [] };
       },
       async setVote(route_id, value) { await this.c.from('r27_votes').upsert({ user_id: this.user().id, route_id, value }, { onConflict: 'user_id,route_id' }); },
       async setNote(body) { await this.c.from('r27_notes').upsert({ user_id: this.user().id, body }, { onConflict: 'user_id' }); },
       async addIdea(i) { await this.c.from('r27_ideas').insert({ user_id: this.user().id, ...i, link: i.link || null }); },
-      subscribe(cb) {
-        const ch = this.c.channel('rota27');
-        ['r27_votes', 'r27_notes', 'r27_ideas'].forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, cb));
-        ch.subscribe();
-      }
+      subscribe(cb) { const ch = this.c.channel('rota27'); ['r27_votes', 'r27_notes', 'r27_ideas'].forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, cb)); ch.subscribe(); }
     }
   };
   const be = backends[MODE] || backends.local;
   const me = () => be.user();
 
-  /* ---------- Gate ---------- */
-  const gate = $('#gate'), gateForm = $('#gateForm'), gateErr = $('#gateErr'), gateBtn = $('#gateBtn');
-  gateForm.addEventListener('submit', async (e) => {
+  /* ---------- tema ---------- */
+  function applyTheme(t, rerender) {
+    document.documentElement.dataset.theme = t;
+    $('#themeBtn').innerHTML = icon(t === 'dark' ? 'i-sun' : 'i-moon');
+    $('#themeBtn').setAttribute('aria-label', t === 'dark' ? 'Tema claro' : 'Tema escuro');
+    store('rota27.theme', t);
+    if (rerender && D) { paintMap(); render(); }
+  }
+  $('#themeBtn').addEventListener('click', () => applyTheme(theme() === 'dark' ? 'light' : 'dark', true));
+  applyTheme(theme(), false);
+
+  /* ---------- gate ---------- */
+  const gate = $('#gate'), gateErr = $('#gateErr'), gateBtn = $('#gateBtn');
+  $('#gateForm').addEventListener('submit', async (e) => {
     e.preventDefault(); gateErr.hidden = true; gateBtn.disabled = true; gateBtn.textContent = 'Entrando…';
     const ok = await be.signIn($('#gEmail').value.trim(), $('#gPass').value);
     gateBtn.disabled = false; gateBtn.textContent = 'Entrar';
-    if (!ok) { gateErr.hidden = false; $('#gPass').value = ''; $('#gPass').focus(); return; }
+    if (!ok) { gateErr.textContent = 'E-mail ou senha incorretos.'; gateErr.hidden = false; $('#gPass').value = ''; $('#gPass').focus(); return; }
     start();
   });
   $('#outBtn').addEventListener('click', async () => { await be.signOut(); location.reload(); });
 
   async function start() {
     try { await be.init(); } catch (e) { console.error(e); }
-    if (be.needsAuth && !me()) { gate.hidden = false; $('#app').hidden = true; $('#foot').hidden = true; $('#gEmail').focus(); return; }
+    if (be.needsAuth && !me()) { gate.hidden = false; $('#app').hidden = true; $('#gEmail').focus(); return; }
     try { D = await be.loadContent(); } catch (e) { gate.hidden = false; gateErr.textContent = 'Não foi possível carregar o conteúdo.'; gateErr.hidden = false; return; }
-    P = D.places;
-    S = await be.loadState();
-    gate.hidden = true; $('#app').hidden = false; $('#foot').hidden = false;
-    $('#outBtn').hidden = !be.needsAuth;
-    buildStatic(); buildMap(); renderWho(); renderCmp(); renderVotes(); renderNotes();
+    P = D.places; S = await be.loadState();
+    gate.hidden = true; $('#app').hidden = false; $('#outBtn').hidden = !be.needsAuth;
+    $('#foot').textContent = `${be.needsAuth ? 'Supabase · RLS' : 'modo local'} · trechos Rome2Rio set/2026 · v0.2`;
+    renderWho();
     const fromHash = (location.hash.match(/rota=([a-z]+)/) || [])[1];
-    setActive(D.routes.some(r => r.id === fromHash) ? fromHash : D.routes[0].id);
-    be.subscribe(async () => { S = await be.loadState(); renderVotes(); renderNotes(); renderIdeasAll(); });
+    routeId = D.routes.some(r => r.id === fromHash) ? fromHash : D.routes[0].id;
+    buildMap();
+    be.subscribe(async () => { S = await be.loadState(); if (view !== 'roteiro') render(); else renderIdeas(); });
   }
 
-  /* ---------- Estático ---------- */
-  function buildStatic() {
-    const m = D.meta;
-    $('#heroEyebrow').textContent = `${m.saida.data} → ${m.volta.data} jul 2027 · ${m.noites} noites · ${m.saida.de} ⇄ ${m.saida.para} ${m.saida.tipo}`;
-    $('#facts').innerHTML = `
-      <div role="listitem"><div class="fact__v">${m.noites}<small>noites</small></div><div class="fact__l">no chão</div></div>
-      <div role="listitem"><div class="fact__v">R$${m.passagem.valor.toLocaleString('pt-BR')}</div><div class="fact__l">passagem · 2 pax</div></div>
-      <div role="listitem"><div class="fact__v">R$${m.orcamento.base / 1000}<small>–${m.orcamento.teto / 1000}k</small></div><div class="fact__l">orçamento</div></div>
-      <div role="listitem"><div class="fact__v">${D.routes.length}</div><div class="fact__l">rotas desenhadas</div></div>`;
-    $('#ticket').innerHTML = `
-      <div class="ticket__head"><span class="eyebrow">Bilhete âncora</span><span class="ticket__cia">${esc(m.saida.cia)} · ${esc(m.saida.tipo)}</span></div>
-      <div class="leg"><div><div class="leg__code">${m.saida.de}</div><div class="leg__t">${m.saida.data} · ${m.saida.hora}</div></div><div class="leg__mid">${icon('i-plane')}${m.saida.dur}</div><div><div class="leg__code">${m.saida.para}</div><div class="leg__t">${m.saida.chega}</div></div></div>
-      <div class="leg"><div><div class="leg__code">${m.volta.de}</div><div class="leg__t">${m.volta.data} · ${m.volta.hora}</div></div><div class="leg__mid">${icon('i-plane')}${m.volta.dur}</div><div><div class="leg__code">${m.volta.para}</div><div class="leg__t">${m.volta.chega}</div></div></div>
-      <div class="ticket__foot"><div class="ticket__price">R$${m.passagem.valor.toLocaleString('pt-BR')}<small>${esc(m.passagem.classe.split(' · ')[0])}</small></div><div class="ticket__note">${esc(m.passagem.obs)}${m.volta.nota ? ' ' + esc(m.volta.nota) + '.' : ''}</div></div>`;
-    $('#fontes').innerHTML = m.fontes.map(f => `<li>${esc(f)}</li>`).join('');
-    $('#alerta').innerHTML = `<p class="eyebrow" style="color:var(--warn)">Alerta de entrada</p><p style="margin-top:6px">${esc(m.alerta)}</p>`;
-    $('#modeLabel').textContent = be.needsAuth ? 'supabase · rls' : 'modo local';
-    $('#decidirHelp').textContent = be.needsAuth ? 'Cada um vota no seu; o outro vê ao vivo.' : 'Modo local: use o seletor A/R no topo para trocar de pessoa. Nada sai deste navegador.';
-    $('#decidirNote').textContent = be.needsAuth ? 'Ideias, custos e hotéis entram por base, no diário. O que vocês lançam aqui vira dado — e é lapidado no roteiro pelo André.' : 'Próxima fase: Supabase Auth + RLS (padrão Flowdash) — votos, notas e ideias compartilhados entre vocês, atrás de login.';
-    const chips = $('#chips'); chips.innerHTML = '';
-    D.routes.forEach(r => {
-      const b = document.createElement('button');
-      b.className = 'chip'; b.type = 'button'; b.dataset.id = r.id; b.style.setProperty('--rc', col(r)); b.setAttribute('aria-pressed', 'false');
-      b.innerHTML = `<span class="chip__dot" aria-hidden="true"></span><span>${esc(r.nome)}</span><span class="chip__s">${esc(r.statusLabel)}</span>`;
-      b.addEventListener('click', () => setActive(r.id));
-      chips.appendChild(b);
-    });
-  }
   function renderWho() {
-    const who = $('#who'); const u = me();
-    if (be.needsAuth) { who.innerHTML = `<span class="who__chip ${u.cls}" title="${esc(u.name)}">${esc(u.initial)}</span><span class="who__name">${esc(u.name)}</span>`; return; }
-    who.innerHTML = Object.entries(PEOPLE).map(([k, p]) => `<button type="button" class="who__chip ${p.cls}" data-who="${k}" aria-pressed="${u.id === k}" aria-label="Eu sou ${p.name}" title="${p.name}">${p.initial}</button>`).join('');
-    who.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { be.setWho(b.dataset.who); renderWho(); renderVotes(); renderNotes(); renderIdeasAll(); }));
+    const who = $('#who'), u = me();
+    if (be.needsAuth) { who.innerHTML = `<span class="avatar avatar--me" title="${esc(u.name)}">${esc(u.initial)}</span><span class="who__name">${esc(u.name)}</span>`; return; }
+    who.innerHTML = Object.entries(PEOPLE).map(([k, p]) => `<button type="button" class="avatar ${u.id === k ? 'avatar--me' : ''}" data-who="${k}" aria-pressed="${u.id === k}" aria-label="Eu sou ${p.name}" title="${p.name}">${p.initial}</button>`).join('');
+    who.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { be.setWho(b.dataset.who); renderWho(); render(); }));
   }
 
-  /* ---------- Mapa ---------- */
-  const TILES = {
-    light: ['Canvas/World_Light_Gray_Base', 'Canvas/World_Light_Gray_Reference'],
-    dark: ['Canvas/World_Dark_Gray_Base', 'Canvas/World_Dark_Gray_Reference']
-  };
-  const tileUrl = (svc) => `https://server.arcgisonline.com/ArcGIS/rest/services/${svc}/MapServer/tile/{z}/{y}/{x}`;
-  function swapTiles(t) {
-    tiles.forEach(l => map.removeLayer(l)); tiles = [];
-    tiles.push(L.tileLayer(tileUrl(TILES[t][0]), { maxZoom: 16, attribution: 'Tiles &copy; Esri' }).addTo(map));
-    tiles.push(L.tileLayer(tileUrl(TILES[t][1]), { maxZoom: 16, opacity: .8 }).addTo(map));
-    Object.values(layers).forEach(g => g.group.eachLayer(l => l.bringToFront && l.bringToFront()));
+  /* ---------- linha do tempo (derivada dos dados) ---------- */
+  function buildDays(r) {
+    const m = D.meta, out = [];
+    const dnum = (d) => +d.split('/')[0];
+    const wd = (d) => WD[new Date(2027, 6, dnum(d)).getDay()];
+    const mk = (o) => ({ bullets: [], moves: [], sides: [], ...o, wd: wd(o.date), d: dnum(o.date) });
+    out.push(mk({ date: m.saida.data, kind: 'out', title: 'Embarque no Brasil', place: null, desc: `${m.saida.de} ${m.saida.hora} · ${m.saida.cia} ${m.saida.tipo} · ${m.saida.dur} · chega ${m.saida.para} ${m.saida.chega}` }));
+    let li = 0;
+    const legs = r.legs;
+    r.stops.forEach((s, si) => {
+      const chain = [], sides = [];
+      while (li < legs.length) {
+        const L = legs[li];
+        if (L.note) { sides.push(L); li++; continue; }
+        chain.push(L); li++;
+        if (L.to === s.place) break;
+      }
+      while (li < legs.length && legs[li].note) { sides.push(legs[li]); li++; }
+      const first = dnum(s.in), last = dnum(s.out);
+      const dated = {}, generic = [];
+      s.bullets.forEach(b => { const mm = b.match(/^(\d{2})\/07\s*[—-]\s*(.*)$/); if (mm) (dated[+mm[1]] = dated[+mm[1]] || []).push(mm[2]); else generic.push(b); });
+      for (let d = first; d < last; d++) {
+        const date = `${String(d).padStart(2, '0')}/07`;
+        const arrive = d === first;
+        out.push(mk({ date, kind: arrive ? (si === 0 ? 'arrive' : 'move') : 'stay', title: s.titulo, place: s.place, stop: s, si, nights: s.nights,
+          moves: arrive ? chain : [], sides: arrive ? sides : [], bullets: [...(arrive ? generic : []), ...(dated[d] || [])] }));
+      }
+    });
+    const lastStop = r.stops[r.stops.length - 1];
+    out.push(mk({ date: m.volta.data, kind: 'back', title: 'Voo de volta', place: lastStop.place, stop: lastStop, si: r.stops.length - 1, desc: `${m.volta.de} ${m.volta.hora} · ${m.volta.cia} ${m.volta.tipo} · ${m.volta.dur}`, bullets: (lastStop.bullets.filter(b => b.startsWith(m.volta.data)).map(b => b.replace(/^\d{2}\/07\s*[—-]\s*/, ''))) }));
+    out.push(mk({ date: m.volta.chega.split(' ')[0], kind: 'home', title: 'Chegada em casa', place: null, desc: `${m.volta.para} ${m.volta.chega.split('· ')[1] || ''}` }));
+    return out;
   }
+
+  /* ---------- mapa ---------- */
+  const STYLES = { light: 'https://tiles.openfreemap.org/styles/positron', dark: 'https://tiles.openfreemap.org/styles/positron' };
   function buildMap() {
-    map = L.map('map', { zoomControl: false, scrollWheelZoom: false });
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    map.setView([40.6, 17.5], 5);
-    swapTiles(theme());
-    buildLayers();
-    map.on('zoomend', () => { if (!active) return; layers[active].lines.forEach(pl => { const el = pl.getElement && pl.getElement(); if (el && !pl._side) el.classList.add('is-ants'); }); });
-    window.addEventListener('scroll', () => { scrollArmed = true; }, { passive: true });
+    map = new maplibregl.Map({ container: 'map', style: STYLES.light, center: [17.5, 40.6], zoom: 4.6, attributionControl: { compact: true }, cooperativeGestures: false });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+    map.on('load', () => { mapReady = true; paintMap(); setRoute(routeId, { keepView: false }); setView('roteiro'); });
+    map.on('style.load', () => { if (mapReady) paintMap(); });
+    $('#fitBtn').addEventListener('click', () => fitRoute());
   }
-  function buildLayers() {
-    Object.values(layers).forEach(g => { map.removeLayer(g.group); g.pins.forEach(p => map.removeLayer(p)); });
-    layers = {};
+  const arc = (a, b) => {
+    const n = 32, pts = [];
+    const dx = b[0] - a[0], dy = b[1] - a[1], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    const k = 0.22, cx = mx - dy * k, cy = my + dx * k;
+    for (let i = 0; i <= n; i++) { const t = i / n; pts.push([(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * cx + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * cy + t * t * b[1]]); }
+    return pts;
+  };
+  const legCoords = (L) => { const a = P[L.from], b = P[L.to]; const A = [a.lng, a.lat], B = [b.lng, b.lat]; return L.mode === 'plane' ? arc(A, B) : [A, B]; };
+  function fc(r) {
+    return { type: 'FeatureCollection', features: r.legs.map((L, i) => P[L.from] && P[L.to] ? { type: 'Feature', properties: { i, mode: L.mode, side: !!L.note, route: r.id, label: `${P[L.from].n} → ${P[L.to].n} · ${MODEI[L.mode][1]} · ${fmtMin(L.min)}` }, geometry: { type: 'LineString', coordinates: legCoords(L) } } : null).filter(Boolean) };
+  }
+  const W = ['interpolate', ['linear'], ['zoom'], 4, 2.2, 8, 3.6, 12, 5.5];
+  const WC = ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 7, 12, 9.5];
+  function paintMap() {
+    if (!map.isStyleLoaded()) return;
+    const cas = getComputedStyle(document.documentElement).getPropertyValue('--casing').trim();
     D.routes.forEach(r => {
-      const c = col(r), g = L.layerGroup(), lines = [], pins = [];
-      r.legs.forEach(leg => {
-        const a = P[leg.from], b = P[leg.to]; if (!a || !b) return;
-        const side = leg.note === 'excursão' || leg.note === 'opcional';
-        const pl = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], { color: c, weight: side ? 2 : 3.5, opacity: side ? .7 : .95, className: `route route--${leg.mode}` });
-        pl._side = side; g.addLayer(pl); lines.push(pl);
+      const id = `route-${r.id}`, c = col(r);
+      if (!map.getSource(id)) map.addSource(id, { type: 'geojson', data: fc(r) });
+      const add = (lid, filter, paint, layout) => { if (map.getLayer(lid)) { Object.entries(paint).forEach(([k, v]) => map.setPaintProperty(lid, k, v)); return; } map.addLayer({ id: lid, type: 'line', source: id, filter, paint, layout: { 'line-cap': 'round', 'line-join': 'round', ...layout } }); };
+      add(`${id}-casing`, ['!=', ['get', 'mode'], 'plane'], { 'line-color': cas, 'line-width': WC, 'line-opacity': 0.9 }, {});
+      add(`${id}-land`, ['all', ['!=', ['get', 'mode'], 'plane'], ['!=', ['get', 'mode'], 'ferry']], { 'line-color': c, 'line-width': W }, {});
+      add(`${id}-ferry`, ['==', ['get', 'mode'], 'ferry'], { 'line-color': c, 'line-width': W, 'line-dasharray': [2, 2] }, {});
+      add(`${id}-plane`, ['==', ['get', 'mode'], 'plane'], { 'line-color': c, 'line-width': 2.4, 'line-dasharray': [0.1, 2.4] }, {});
+      [`${id}-land`, `${id}-ferry`, `${id}-plane`].forEach(lid => {
+        map.on('mouseenter', lid, (e) => { map.getCanvas().style.cursor = 'pointer'; popup.setLngLat(e.lngLat).setHTML(esc(e.features[0].properties.label)).addTo(map); });
+        map.on('mousemove', lid, (e) => popup.setLngLat(e.lngLat));
+        map.on('mouseleave', lid, () => { map.getCanvas().style.cursor = ''; popup.remove(); });
+        map.on('click', lid, (e) => { const f = e.features[0].properties; if (f.route !== routeId) { setRoute(f.route, { keepView: true }); } const di = days.findIndex(d => d.moves.some(L => r.legs.indexOf(L) === f.i) || d.sides.some(L => r.legs.indexOf(L) === f.i)); if (di >= 0) selectDay(di, { scroll: true }); });
       });
-      r.stops.forEach((s, i) => {
-        const p = P[s.place];
-        pins.push(L.marker([p.lat, p.lng], { icon: L.divIcon({ className: 'pin', html: `<span style="--rc:${c}">${i + 1}</span>`, iconSize: [0, 0] }), keyboard: false, interactive: false }));
-      });
-      layers[r.id] = { group: g, lines, pins, bounds: L.latLngBounds(r.stops.map(s => [P[s.place].lat, P[s.place].lng])) };
-      g.addTo(map);
+    });
+    if (!map.getSource('active')) map.addSource('active', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    if (!map.getLayer('active-casing')) map.addLayer({ id: 'active-casing', type: 'line', source: 'active', paint: { 'line-color': cas, 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 9, 12, 14], 'line-opacity': .95 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    if (!map.getLayer('active-line')) map.addLayer({ id: 'active-line', type: 'line', source: 'active', paint: { 'line-color': '#10151C', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 12, 8] }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    applyVisibility();
+  }
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
+  function applyVisibility() {
+    if (!mapReady) return;
+    D.routes.forEach(r => {
+      const on = view === 'comparar' || r.id === routeId, id = `route-${r.id}`;
+      ['casing', 'land', 'ferry', 'plane'].forEach(k => { const lid = `${id}-${k}`; if (map.getLayer(lid)) { map.setLayoutProperty(lid, 'visibility', on ? 'visible' : 'none'); map.setPaintProperty(lid, 'line-opacity', view === 'comparar' ? (r.id === routeId ? 1 : .55) : (k === 'casing' ? .9 : 1)); } });
     });
   }
-  function rerenderAll() {
-    buildLayers(); buildStatic(); renderCmp(); renderVotes();
-    if (active) setActive(active, { keepView: true });
+  function setActiveLegs(legs, color) {
+    if (!mapReady) return;
+    const r = R();
+    map.getSource('active').setData({ type: 'FeatureCollection', features: legs.map(L => ({ type: 'Feature', properties: { mode: L.mode }, geometry: { type: 'LineString', coordinates: legCoords(L) } })) });
+    map.setPaintProperty('active-line', 'line-color', color || col(r));
+    const dashed = legs.length && legs.every(L => L.mode === 'plane');
+    map.setPaintProperty('active-line', 'line-dasharray', dashed ? [0.1, 2] : [1, 0]);
+    clearInterval(antsTimer);
+    if (legs.length && !dashed && !reduced) {
+      const seq = [[0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0], [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2], [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5]];
+      let st = 0; antsTimer = setInterval(() => { st = (st + 1) % seq.length; if (map.getLayer('active-line')) map.setPaintProperty('active-line', 'line-dasharray', seq[st]); }, 70);
+    }
   }
-
-  /* ---------- Rota ativa ---------- */
-  function setActive(id, { keepView = false } = {}) {
-    const r = D.routes.find(x => x.id === id); if (!r) return;
-    active = id; currentStop = -1; scrollArmed = false;
-    document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.id === id)));
-    D.routes.forEach(o => {
-      const L2 = layers[o.id], on = o.id === id;
-      L2.lines.forEach(pl => {
-        const el = pl.getElement && pl.getElement();
-        pl.setStyle({ weight: on ? (pl._side ? 2 : 4) : 2, opacity: on ? (pl._side ? .7 : 1) : .18 });
-        if (el) { el.classList.remove('is-ants'); el.style.strokeDasharray = ''; el.style.strokeDashoffset = ''; el.style.transition = ''; }
-        if (on) pl.bringToFront();
-      });
-      L2.pins.forEach(m => on ? m.addTo(map) : map.removeLayer(m));
-    });
-    const card = $('#mapCard'); card.style.setProperty('--rc', col(r));
-    card.innerHTML = `<div class="map-card__t">${esc(r.nome)}</div><div class="map-card__s">${esc(r.sub)}</div><div class="map-card__m"><span><b>${r.stops.reduce((a, s) => a + s.nights, 0)}</b> noites</span><span><b>${r.stops.length}</b> bases</span><span><b>${r.paises.join(' · ')}</b></span></div>`;
-    renderDiario(r); renderTrechos(r);
-    history.replaceState(null, '', `#rota=${id}`);
-    if (keepView) { drawIn(r); return; }
-    map.once('moveend', () => drawIn(r));
-    map.flyToBounds(layers[id].bounds, { padding: [60, 60], duration: reduced ? 0 : 1.1, maxZoom: 8 });
-  }
-  function drawIn(r) {
-    layers[r.id].lines.forEach((pl, k) => {
-      const el = pl.getElement && pl.getElement(); if (!el) return;
-      if (reduced) { if (!pl._side) el.classList.add('is-ants'); return; }
-      const len = el.getTotalLength ? el.getTotalLength() : 0; if (!len) return;
-      el.style.transition = 'none'; el.style.strokeDasharray = `${len}`; el.style.strokeDashoffset = `${len}`; el.getBoundingClientRect();
-      el.style.transition = `stroke-dashoffset ${Math.min(1400, 400 + len * 2)}ms ${k * 90}ms cubic-bezier(.2,.7,.2,1)`; el.style.strokeDashoffset = '0';
-      el.addEventListener('transitionend', () => { el.style.transition = ''; el.style.strokeDasharray = ''; el.style.strokeDashoffset = ''; if (!pl._side) el.classList.add('is-ants'); }, { once: true });
-    });
-  }
-
-  /* ---------- Diário + ideias ---------- */
-  function renderDiario(r) {
-    const maxN = Math.max(...r.stops.map(s => s.nights)), c = col(r);
-    let html = '';
+  function buildMarkers(r) {
+    markers.forEach(m => m.remove()); markers = [];
+    const c = col(r);
+    const mkEl = (html, cls, title) => { const el = document.createElement('button'); el.type = 'button'; el.className = `pin ${cls}`; el.style.setProperty('--rc', c); el.innerHTML = html; el.setAttribute('aria-label', title); el.title = title; return el; };
+    const g = mkEl(icon('i-plane'), 'pin--gate', 'Roma FCO · entrada e saída');
+    g.addEventListener('click', () => selectDay(0, { scroll: true }));
+    markers.push(new maplibregl.Marker({ element: g }).setLngLat([P.fco.lng, P.fco.lat]).addTo(map));
     r.stops.forEach((s, i) => {
-      const legIn = r.legs.find(l => l.to === s.place && !l.note) || r.legs.find(l => l.to === s.place);
-      html += `<article class="stop ${s.nights === maxN && s.nights >= 3 ? 'stop--anchor' : ''}" data-i="${i}" data-place="${s.place}" style="--rc:${c}">
-        <div class="stop__top"><span class="stop__n">${i + 1}</span><span class="stop__dates">${esc(s.in)} → ${esc(s.out)}</span><span class="stop__nights">${s.nights} ${s.nights === 1 ? 'noite' : 'noites'}</span></div>
-        <h3>${esc(s.titulo)}</h3>
-        ${legIn ? `<div class="stop__in">${mIcon(legIn.mode, 'ic ic--sm')}<span>chegada</span><b>${fmtMin(legIn.min)}</b><span>· ${esc(legIn.carrier)}</span></div>` : ''}
-        <ul>${s.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>
-        <div class="ideas" data-ideas="${s.place}"></div>
-        <div class="stop__foot"><button class="btn btn--ghost" type="button" data-add="${s.place}">${icon('i-plus', 'ic ic--sm')}Ideia · custo · hotel · dúvida</button></div>
-      </article>`;
-    });
-    html += `<div class="riscos"><p class="eyebrow">Riscos e mitigações</p><ul>${r.riscos.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-    const d = $('#diario'); d.innerHTML = html;
-    d.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => openIdeaForm(b.closest('.stop'), r.id, b.dataset.add)));
-    renderIdeasAll();
-    if (observer) observer.disconnect();
-    observer = new IntersectionObserver((entries) => { if (!scrollArmed) return; entries.forEach(e => { if (e.isIntersecting) setCurrentStop(r, +e.target.dataset.i); }); }, { rootMargin: '-38% 0px -50% 0px', threshold: 0 });
-    d.querySelectorAll('.stop').forEach(el => observer.observe(el));
-  }
-  function setCurrentStop(r, i) {
-    if (currentStop === i) return; currentStop = i;
-    $('#diario').querySelectorAll('.stop').forEach(el => el.classList.toggle('is-current', +el.dataset.i === i));
-    layers[r.id].pins.forEach((m, k) => { const el = m.getElement(); if (el) el.classList.toggle('is-current', k === i); });
-    const p = P[r.stops[i].place], z = Math.max(map.getZoom(), 8);
-    reduced ? map.setView([p.lat, p.lng], z) : map.flyTo([p.lat, p.lng], z, { duration: .9 });
-  }
-  function renderIdeasAll() {
-    if (!active) return;
-    document.querySelectorAll('[data-ideas]').forEach(box => {
-      const items = S.ideas.filter(i => i.route_id === active && i.stop_place === box.dataset.ideas);
-      box.innerHTML = items.map(i => `<div class="idea"><span class="idea__who" title="${esc(i.profiles?.display_name)}">${esc(i.profiles?.initial || '?')}</span><div><div class="idea__kind">${esc(KINDS[i.kind] || i.kind)}</div><div class="idea__t">${esc(i.title)}</div>${i.body ? `<div class="idea__b">${esc(i.body)}</div>` : ''}${i.link ? `<div class="idea__b"><a href="${esc(i.link)}" target="_blank" rel="noopener">${esc(i.link.replace(/^https?:\/\//, '').slice(0, 48))}</a></div>` : ''}</div>${i.amount ? `<div class="idea__amt">${esc(i.currency || '€')} ${Number(i.amount).toLocaleString('pt-BR')}</div>` : '<span></span>'}</div>`).join('');
+      const p = P[s.place], el = mkEl(String(i + 1), '', `${i + 1} · ${s.titulo}`);
+      el.addEventListener('click', () => { const di = days.findIndex(d => d.si === i); if (di >= 0) selectDay(di, { scroll: true }); });
+      markers.push(new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map));
     });
   }
-  function openIdeaForm(stopEl, route_id, stop_place) {
-    if (stopEl.querySelector('.idea-form')) return;
+  function routeBounds(r) { const b = new maplibregl.LngLatBounds(); r.stops.forEach(s => b.extend([P[s.place].lng, P[s.place].lat])); b.extend([P.fco.lng, P.fco.lat]); return b; }
+  function padding() { const mobile = innerWidth <= 900; return mobile ? { top: 80, bottom: Math.round(innerHeight * .54) + 24, left: 30, right: 30 } : { top: 130, bottom: 70, left: 70, right: 90 }; }
+  function fitRoute(r = R()) { if (!mapReady) return; map.fitBounds(routeBounds(r), { padding: padding(), duration: reduced ? 0 : 900, maxZoom: 8 }); }
+  function fitAll() { const b = new maplibregl.LngLatBounds(); D.routes.forEach(r => b.extend(routeBounds(r))); map.fitBounds(b, { padding: padding(), duration: reduced ? 0 : 900 }); }
+
+  /* ---------- rota / vista / dia ---------- */
+  function setRoute(id, { keepView = false } = {}) {
+    routeId = id; days = buildDays(R()); dayIdx = -1; legIdx = -1;
+    history.replaceState(null, '', `#rota=${id}`);
+    if (mapReady) { applyVisibility(); buildMarkers(R()); setActiveLegs([]); if (!keepView) fitRoute(); }
+    render();
+  }
+  function setView(v) {
+    view = v; $('#body').dataset.view = v;
+    $('#tabs').querySelectorAll('[role=tab]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.view === v)));
+    applyVisibility();
+    if (v === 'comparar') { setActiveLegs([]); markers.forEach(m => m.getElement().classList.add('pin--dim')); fitAll(); $('#routeCard').innerHTML = `<div class="route-card__t">${D.routes.length} rotas no mapa</div><div class="route-card__s">Passe o mouse num cartão para destacar</div>`; }
+    else { markers.forEach(m => m.getElement().classList.remove('pin--dim')); if (v === 'roteiro' && dayIdx < 0) fitRoute(); }
+    render();
+    $('#panel').scrollTop = 0;
+    if (map) setTimeout(() => map.resize(), 280);
+  }
+  $('#tabs').addEventListener('click', (e) => { const t = e.target.closest('[role=tab]'); if (t) setView(t.dataset.view); });
+
+  let obs = null;
+  function selectDay(i, { scroll = false, fromScroll = false } = {}) {
+    if (i < 0 || i >= days.length) return;
+    const d = days[i], r = R(), c = col(r);
+    dayIdx = i;
+    document.querySelectorAll('.day').forEach(el => el.classList.toggle('is-active', +el.dataset.i === i));
+    const where = d.kind === 'out' ? 'Guarulhos → Roma' : d.kind === 'home' ? 'Chegada em Guarulhos' : d.moves.length ? `${esc(P[d.moves[0].from].n)} → ${esc(d.title)}` : esc(d.title);
+    $('#routeCard').innerHTML = `<div class="route-card__t"><span class="chip" style="background:${c};color:#fff">D${i}</span>${d.d} ${d.wd} · ${where}</div><div class="route-card__s">${esc(r.nome)}${d.nights && (d.kind === 'arrive' || d.kind === 'move') ? ` · ${d.nights} ${d.nights === 1 ? 'noite' : 'noites'}` : ''}</div>`;
+    markers.forEach((m, k) => { const el = m.getElement(); const isGate = k === 0; el.classList.toggle('is-active', isGate ? (d.kind === 'out' || d.kind === 'back' || d.kind === 'home') : (k - 1 === d.si && d.kind !== 'out' && d.kind !== 'home')); });
+    if (mapReady) {
+      const pad = padding(), dur = reduced ? 0 : 900;
+      if (d.kind === 'out' || d.kind === 'home') { setActiveLegs([]); map.easeTo({ center: [P.fco.lng, P.fco.lat], zoom: 5.2, padding: pad, duration: dur }); }
+      else if (d.moves.length) {
+        setActiveLegs(d.moves);
+        const b = new maplibregl.LngLatBounds(); d.moves.forEach(L => legCoords(L).forEach(pt => b.extend(pt))); map.fitBounds(b, { padding: pad, duration: dur, maxZoom: 9.5 });
+      } else if (d.kind === 'back') {
+        const back = r.legs.filter(L => L.to === 'roma' && !L.note); setActiveLegs(back.length ? back : []);
+        map.easeTo({ center: [P.fco.lng, P.fco.lat], zoom: 6, padding: pad, duration: dur });
+      } else {
+        setActiveLegs(d.sides.length ? d.sides : []);
+        const p = P[d.place]; map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 8.6), padding: pad, duration: dur });
+      }
+    }
+    if (scroll && !fromScroll) { const el = document.querySelector(`.day[data-i="${i}"]`); if (el) { suppress = true; el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); setTimeout(() => suppress = false, 900); } }
+  }
+  let suppress = false;
+
+  /* ---------- render ---------- */
+  function render() {
+    const r = R(), c = col(r), el = $('#panelContent');
+    document.documentElement.style.setProperty('--rc', c);
+    if (view !== 'comparar' && dayIdx < 0) $('#routeCard').innerHTML = `<div class="route-card__t"><span class="dot" style="--rc:${c}"></span>${esc(r.nome)} <span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span></div><div class="route-card__s">${esc(r.sub)}</div>`;
+    if (view === 'roteiro') el.innerHTML = headerHTML(r) + timelineHTML(r);
+    else if (view === 'trechos') el.innerHTML = headerHTML(r) + legsHTML(r);
+    else if (view === 'comparar') el.innerHTML = compareHTML();
+    else el.innerHTML = decideHTML();
+    wire(r);
+  }
+  function headerHTML(r) {
+    const c = col(r), nights = r.stops.reduce((a, s) => a + s.nights, 0);
+    return `<div class="rh">
+      <div class="rsel" id="rsel" data-open="false">
+        <button class="rsel__btn" type="button" aria-haspopup="listbox" aria-expanded="false" id="rselBtn">
+          <span class="dot" style="--rc:${c}"></span>
+          <span class="rsel__txt"><span class="rsel__name">${esc(r.nome)}</span><span class="rsel__sub">${esc(r.sub)}</span></span>
+          <span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span>
+          <svg class="ic rsel__chev"><use href="#i-chev"/></svg>
+        </button>
+        <div class="rsel__list" role="listbox" id="rselList" hidden>${D.routes.map(o => `<button class="rsel__opt" role="option" aria-selected="${o.id === r.id}" data-id="${o.id}" type="button"><span class="dot" style="--rc:${col(o)}"></span><span><b>${esc(o.nome)}</b><small>${esc(o.sub)}</small></span><span class="chip ${STATUS[o.status] || ''}" style="margin-left:auto">${esc(o.statusLabel)}</span></button>`).join('')}</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>${nights}</b><span>noites</span></div>
+        <div class="stat"><b>${r.stops.length}</b><span>bases</span></div>
+        <div class="stat"><b>${r.paises.join('·')}</b><span>países</span></div>
+        <div class="stat"><b>€${(r.custoEur[0] / 1000).toFixed(1)}–${(r.custoEur[1] / 1000).toFixed(1)}k</b><span>em terra</span></div>
+      </div>
+    </div>`;
+  }
+  function timelineHTML(r) {
+    const c = col(r), KIND = { out: ['i-plane', 'Embarque'], arrive: ['i-plane', 'Chegada + deslocamento'], move: ['i-arrow', 'Deslocamento'], stay: ['i-bed', 'Dia na base'], back: ['i-plane', 'Volta'], home: ['i-home', 'Casa'] };
+    return `<div class="tl" style="--rc:${c}">` + days.map((d, i) => {
+      const [ic, kl] = KIND[d.kind], anchor = d.stop && d.nights >= 3 && d.nights === Math.max(...r.stops.map(s => s.nights));
+      const legIn = d.moves.length ? d.moves[d.moves.length - 1] : null;
+      return `<article class="day ${i === dayIdx ? 'is-active' : ''}" data-i="${i}" tabindex="0" role="button" aria-label="Dia ${i} · ${d.date}">
+        <div class="day__date"><div class="day__num">${d.d}</div><div class="day__wd">${d.wd} · jul</div><span class="day__idx">${i === 0 ? 'D0' : 'D' + i}</span></div>
+        <div class="day__body">
+          <div class="day__kind">${icon(ic, 'ic ic--s')}${kl}</div>
+          <div class="day__title">${esc(d.title)}${d.kind === 'arrive' ? ` <span class="chip">${esc(D.meta.saida.chega.split('· ')[1])} em ${esc(D.meta.saida.para)}</span>` : ''}${d.nights && (d.kind === 'arrive' || d.kind === 'move') ? ` <span class="chip ${anchor ? 'chip--ok' : ''}">${d.nights} ${d.nights === 1 ? 'noite' : 'noites'}${anchor ? ' · âncora' : ''}</span>` : ''}</div>
+          ${d.desc ? `<div class="move" style="margin-top:10px"><svg class="ic ic--s"><use href="#i-plane"/></svg><div><div class="move__t">${esc(d.desc)}</div></div><div></div></div>` : ''}
+          ${d.moves.length ? `<div class="moves">${d.moves.map(L => `<div class="move">${mIcon(L.mode, 'ic ic--s')}<div><div class="move__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}</div><div class="move__c">${esc(L.carrier || '')}${L.alt ? ' · alt. ' + esc(L.alt) : ''}</div></div><div class="move__d">${fmtMin(L.min)}</div></div>`).join('')}</div>` : ''}
+          ${d.sides.length ? `<div class="moves">${d.sides.map(L => `<div class="move move--side">${mIcon(L.mode, 'ic ic--s')}<div><div class="move__t">${esc(L.note)} · ${esc(P[L.to].n)}</div><div class="move__c">${esc(L.carrier || '')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="move__d">${fmtMin(L.min)}</div></div>`).join('')}</div>` : ''}
+          ${d.bullets.length ? `<ul>${d.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}
+          ${d.stop && (d.kind === 'arrive' || d.kind === 'move') ? `<div class="ideas" data-ideas="${d.place}"></div><div class="day__foot"><button class="btn btn--ghost" type="button" data-add="${d.place}">${icon('i-plus', 'ic ic--s')}Ideia · custo · hotel · dúvida</button></div>` : ''}
+        </div></article>`;
+    }).join('') + `</div><div class="risks"><p class="lbl">Riscos e mitigações</p><ul>${r.riscos.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div><div style="height:24px"></div>`;
+  }
+  function legsHTML(r) {
+    const main = r.legs.filter(l => !l.note), total = main.reduce((a, l) => a + l.min, 0), by = {};
+    main.forEach(l => by[l.mode] = (by[l.mode] || 0) + 1);
+    return `<div class="legs" style="--rc:${col(r)}"><div class="stats" style="margin:4px 0 8px"><div class="stat"><b>${main.length}</b><span>trechos</span></div><div class="stat"><b>${fmtMin(total)}</b><span>em trânsito</span></div><div class="stat"><b>${Object.keys(by).map(m => `${by[m]}<span style="display:inline-flex;vertical-align:-2px;margin:0 6px 0 2px">${mIcon(m, 'ic ic--s')}</span>`).join('')}</b><span>por modo</span></div></div>` +
+      r.legs.map((L, i) => `<div class="legrow ${i === legIdx ? 'is-active' : ''}" data-leg="${i}" role="button" tabindex="0"><span class="legrow__n mono">${i + 1}</span><div><div class="legrow__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}${L.note ? ` <span class="chip">${esc(L.note)}</span>` : ''}</div><div class="legrow__c">${MODEI[L.mode][1]} · ${esc(L.carrier || '—')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="legrow__d">${fmtMin(L.min)}</div></div>`).join('') + `</div>`;
+  }
+  function compareHTML() {
+    const order = ['recomendado', 'finalista', 'surpresa', 'sobrevivente', 'fria', 'condicional'];
+    const rs = [...D.routes].sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status));
+    const k = D.meta.cambio.eurBrl;
+    return `<div class="cmp"><p class="cmp__intro">Sete rotas, sete critérios de 1 a 5. Passe o mouse para destacar no mapa; "Ver roteiro" abre o dia a dia.</p>` + rs.map(r => {
+      const c = col(r), nights = r.stops.reduce((a, s) => a + s.nights, 0);
+      return `<section class="card ${r.status === 'recomendado' ? 'card--top' : ''}" style="--rc:${c}" data-route="${r.id}">
+        <div class="card__h"><div style="flex:1"><div class="card__name">${esc(r.nome)}</div><div class="card__sub">${esc(r.sub)}</div></div><span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span></div>
+        <p class="card__sig">${esc(r.assinatura)}</p>
+        <div class="card__stats"><div class="stat"><b>${nights}</b><span>noites</span></div><div class="stat"><b>${r.stops.length}</b><span>bases</span></div><div class="stat"><b>${r.paises.join('·')}</b><span>países</span></div><div class="stat"><b>€${r.custoEur[0].toLocaleString('pt-BR')}–${r.custoEur[1].toLocaleString('pt-BR')}</b><span>≈ R$${Math.round(r.custoEur[0] * k / 1000)}–${Math.round(r.custoEur[1] * k / 1000)} mil</span></div></div>
+        <div class="crit">${D.criterios.map(cr => { const v = r.scores[cr.k]; return `<div class="crit__row"><span title="${esc(cr.d)}">${esc(cr.n)}</span><span class="meter" data-v="${v}" style="--v:${v}"><i></i></span><span class="crit__v">${v}</span></div>`; }).join('')}</div>
+        <p class="card__risk">${esc(r.custoNota)} · ${esc(r.riscos[0])}</p>
+        <div class="card__act"><button class="btn btn--primary" type="button" data-go="${r.id}">${icon('i-map', 'ic ic--s')}Ver roteiro</button></div>
+      </section>`; }).join('') + `</div>`;
+  }
+  function decideHTML() {
+    const u = me();
+    const people = be.needsAuth ? Object.values(S.votes.reduce((a, v) => { a[v.user_id] = { id: v.user_id, ...v.profiles }; return a; }, { [u.id]: { id: u.id, initial: u.initial, display_name: u.name } })) : Object.entries(PEOPLE).map(([id, p]) => ({ id, initial: p.initial, display_name: p.name }));
+    const cols = people.slice(0, 2);
+    const votes = `<div class="votes" style="grid-template-columns:1fr ${cols.map(() => 'auto').join(' ')}"><span></span>${cols.map(p => `<span class="vh lbl" title="${esc(p.display_name)}">${esc(p.initial)}</span>`).join('')}` +
+      D.routes.map(r => `<div class="vrow"><div class="vname"><span class="dot" style="--rc:${col(r)}"></span>${esc(r.nome)}</div>${cols.map(p => { const v = S.votes.find(x => x.user_id === p.id && x.route_id === r.id); const mine = p.id === u.id; return `<button class="heart" type="button" aria-pressed="${!!(v && v.value)}" aria-label="${mine ? 'Votar em' : 'Voto de ' + esc(p.display_name) + ' em'} ${esc(r.nome)}" data-vote="${r.id}" ${mine ? '' : 'disabled'}>${icon('i-heart', 'ic ic--s')}</button>`; }).join('')}</div>`).join('') + `</div>`;
+    const others = S.notes.filter(n => n.user_id !== u.id && n.body);
+    const mine = S.notes.find(n => n.user_id === u.id);
+    const notes = `<div class="inbox">${others.map(n => `<div class="notecard"><div class="notecard__h"><span class="avatar avatar--xs">${esc(n.profiles?.initial)}</span>${esc(n.profiles?.display_name)}</div><p>${esc(n.body)}</p></div>`).join('') || '<p class="empty">Nenhuma nota da outra pessoa ainda.</p>'}</div>
+      <div class="field" style="margin-top:12px"><label for="noteMine">Sua nota</label><textarea id="noteMine">${esc(mine ? mine.body : '')}</textarea></div><div class="idea-form__act" style="margin-top:8px"><button class="btn" type="button" id="noteSave">Salvar nota</button></div>`;
+    const byRoute = {}; S.ideas.forEach(i => (byRoute[i.route_id] = byRoute[i.route_id] || []).push(i));
+    const inbox = Object.keys(byRoute).length ? Object.entries(byRoute).map(([rid, items]) => { const r = D.routes.find(x => x.id === rid); return `<div class="inbox__g">${esc(r ? r.nome : rid)}</div>` + items.map(i => ideaHTML(i, true)).join(''); }).join('') : '<p class="empty">Nenhuma ideia lançada ainda. Elas nascem no Roteiro, em cada base.</p>';
+    return `<div class="dec"><section><h3>Votos</h3>${votes}</section><section><h3>Notas</h3>${notes}</section><section><h3>Ideias, custos e hotéis</h3><div class="inbox">${inbox}</div></section></div>`;
+  }
+  const ideaHTML = (i, withPlace) => `<div class="idea"><span class="avatar avatar--xs" title="${esc(i.profiles?.display_name)}">${esc(i.profiles?.initial || '?')}</span><div><div class="idea__kind">${esc(KINDS[i.kind] || i.kind)}${withPlace && i.stop_place && P[i.stop_place] ? ' · ' + esc(P[i.stop_place].n) : ''}</div><div class="idea__t">${esc(i.title)}</div>${i.body ? `<div class="idea__b">${esc(i.body)}</div>` : ''}${i.link ? `<div class="idea__b"><a href="${esc(i.link)}" target="_blank" rel="noopener">${esc(i.link.replace(/^https?:\/\//, '').slice(0, 44))}</a></div>` : ''}</div>${i.amount ? `<div class="idea__amt">${esc(i.currency || '€')} ${Number(i.amount).toLocaleString('pt-BR')}</div>` : '<span></span>'}</div>`;
+  function renderIdeas() { document.querySelectorAll('[data-ideas]').forEach(box => { box.innerHTML = S.ideas.filter(i => i.route_id === routeId && i.stop_place === box.dataset.ideas).map(i => ideaHTML(i, false)).join(''); }); }
+
+  function wire(r) {
+    const el = $('#panelContent');
+    // seletor de rota
+    const sel = $('#rsel'); if (sel) {
+      const btn = $('#rselBtn'), list = $('#rselList');
+      const close = () => { sel.dataset.open = 'false'; btn.setAttribute('aria-expanded', 'false'); list.hidden = true; };
+      btn.addEventListener('click', () => { const open = sel.dataset.open !== 'true'; sel.dataset.open = String(open); btn.setAttribute('aria-expanded', String(open)); list.hidden = !open; if (open) list.querySelector('[aria-selected=true]')?.focus(); });
+      list.querySelectorAll('.rsel__opt').forEach(o => o.addEventListener('click', () => { close(); setRoute(o.dataset.id); }));
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); }, { once: true });
+      document.addEventListener('click', (e) => { if (!sel.contains(e.target)) close(); }, { once: true });
+    }
+    // dias
+    if (view === 'roteiro') {
+      el.querySelectorAll('.day').forEach(d => { d.addEventListener('click', (e) => { if (e.target.closest('button, a, form')) return; selectDay(+d.dataset.i, { scroll: true }); }); d.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectDay(+d.dataset.i, { scroll: true }); } }); });
+      el.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => openIdeaForm(b.closest('.day'), b.dataset.add)));
+      renderIdeas();
+      if (obs) obs.disconnect();
+      obs = new IntersectionObserver((entries) => { if (suppress) return; entries.forEach(e => { if (e.isIntersecting) selectDay(+e.target.dataset.i, { fromScroll: true }); }); }, { root: $('#panel'), rootMargin: '-30% 0px -55% 0px', threshold: 0 });
+      el.querySelectorAll('.day').forEach(d => obs.observe(d));
+      if (dayIdx < 0) selectDay(0);
+    }
+    if (view === 'trechos') el.querySelectorAll('.legrow').forEach(row => { const go = () => { legIdx = +row.dataset.leg; el.querySelectorAll('.legrow').forEach(x => x.classList.toggle('is-active', x === row)); const L = r.legs[legIdx]; setActiveLegs([L]); const b = new maplibregl.LngLatBounds(); legCoords(L).forEach(pt => b.extend(pt)); map.fitBounds(b, { padding: padding(), duration: reduced ? 0 : 800, maxZoom: 9.5 }); }; row.addEventListener('click', go); row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
+    if (view === 'comparar') {
+      el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { setRoute(b.dataset.go); setView('roteiro'); }));
+      el.querySelectorAll('.card').forEach(c => { c.addEventListener('mouseenter', () => hi(c.dataset.route)); c.addEventListener('mouseleave', () => hi(null)); });
+    }
+    if (view === 'decidir') {
+      el.querySelectorAll('[data-vote]:not([disabled])').forEach(b => b.addEventListener('click', async () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); await be.setVote(b.dataset.vote, on); S = await be.loadState(); render(); }));
+      $('#noteSave')?.addEventListener('click', async () => { const b = $('#noteSave'); b.disabled = true; b.textContent = 'Salvando…'; await be.setNote($('#noteMine').value.trim()); S = await be.loadState(); render(); });
+    }
+  }
+  function hi(id) {
+    if (!mapReady || view !== 'comparar') return;
+    D.routes.forEach(r => ['land', 'ferry', 'plane'].forEach(k => { const lid = `route-${r.id}-${k}`; if (map.getLayer(lid)) map.setPaintProperty(lid, 'line-opacity', id ? (r.id === id ? 1 : .18) : .55); }));
+  }
+  function openIdeaForm(dayEl, stop_place) {
+    if (dayEl.querySelector('.idea-form')) return;
     let kind = 'ideia';
     const f = document.createElement('form'); f.className = 'idea-form'; f.noValidate = true;
-    f.innerHTML = `
-      <div class="seg" role="radiogroup" aria-label="Tipo">${Object.entries(KINDS).map(([k, v]) => `<button type="button" role="radio" aria-pressed="${k === 'ideia'}" data-k="${k}">${v}</button>`).join('')}</div>
+    f.innerHTML = `<div class="seg" role="radiogroup" aria-label="Tipo">${Object.entries(KINDS).map(([k, v]) => `<button type="button" role="radio" aria-pressed="${k === 'ideia'}" data-k="${k}">${v}</button>`).join('')}</div>
       <div class="field"><label for="it-${stop_place}">Título</label><input id="it-${stop_place}" name="title" required maxlength="120"></div>
       <div class="field"><label for="ib-${stop_place}">Detalhe</label><textarea id="ib-${stop_place}" name="body" maxlength="1000"></textarea></div>
-      <div class="idea-form__row">
-        <div class="field"><label for="il-${stop_place}">Link</label><input id="il-${stop_place}" name="link" type="url" placeholder="https://"></div>
-        <div class="field"><label for="ia-${stop_place}">Valor (€)</label><input id="ia-${stop_place}" name="amount" type="number" inputmode="decimal" min="0" step="1"></div>
-      </div>
+      <div class="idea-form__row"><div class="field"><label for="il-${stop_place}">Link</label><input id="il-${stop_place}" name="link" type="url" placeholder="https://"></div><div class="field"><label for="ia-${stop_place}">Valor (€)</label><input id="ia-${stop_place}" name="amount" type="number" inputmode="decimal" min="0" step="1"></div></div>
       <p class="err" hidden>Dê um título.</p>
       <div class="idea-form__act"><button class="btn btn--ghost" type="button" data-cancel>Cancelar</button><button class="btn btn--primary" type="submit">Salvar</button></div>`;
-    stopEl.querySelector('.stop__foot').before(f);
+    dayEl.querySelector('.day__foot').before(f);
     f.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => { kind = b.dataset.k; f.querySelectorAll('[data-k]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     f.querySelector('[data-cancel]').addEventListener('click', () => f.remove());
-    const onEsc = (e) => { if (e.key === 'Escape') { f.remove(); document.removeEventListener('keydown', onEsc); } };
-    document.addEventListener('keydown', onEsc);
+    const onEsc = (e) => { if (e.key === 'Escape') { f.remove(); document.removeEventListener('keydown', onEsc); } }; document.addEventListener('keydown', onEsc);
     f.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(f), title = (fd.get('title') || '').trim();
+      e.preventDefault(); const fd = new FormData(f), title = (fd.get('title') || '').trim();
       if (!title) { f.querySelector('.err').hidden = false; f.title.focus(); return; }
-      const amount = fd.get('amount') ? Number(fd.get('amount')) : null;
       const btn = f.querySelector('[type=submit]'); btn.disabled = true; btn.textContent = 'Salvando…';
-      await be.addIdea({ route_id, stop_place, kind, title, body: (fd.get('body') || '').trim(), link: (fd.get('link') || '').trim(), amount, currency: '€' });
-      S = await be.loadState(); f.remove(); document.removeEventListener('keydown', onEsc); renderIdeasAll();
+      await be.addIdea({ route_id: routeId, stop_place, kind, title, body: (fd.get('body') || '').trim(), link: (fd.get('link') || '').trim(), amount: fd.get('amount') ? Number(fd.get('amount')) : null, currency: '€' });
+      S = await be.loadState(); f.remove(); document.removeEventListener('keydown', onEsc); renderIdeas();
     });
     f.querySelector('input[name=title]').focus();
   }
 
-  /* ---------- Trechos ---------- */
-  function renderTrechos(r) {
-    $('#trechosNome').textContent = r.nome;
-    const main = r.legs.filter(l => !l.note), total = main.reduce((a, l) => a + l.min, 0), byMode = {};
-    main.forEach(l => byMode[l.mode] = (byMode[l.mode] || 0) + 1);
-    $('#trechosSum').innerHTML = `<div><div class="fact__v">${main.length}</div><div class="fact__l">trechos principais</div></div><div><div class="fact__v">${fmtMin(total)}</div><div class="fact__l">em trânsito</div></div><div><div class="fact__v modes">${Object.keys(byMode).map(m => `<span>${byMode[m]}${mIcon(m, 'ic ic--sm')}</span>`).join('')}</div><div class="fact__l">por modo</div></div>`;
-    $('#trechosTbl tbody').innerHTML = r.legs.map((l, i) => `<tr><td class="num">${i + 1}</td><td>${esc(P[l.from].n)} <svg class="ic ic--sm" style="display:inline;vertical-align:-3px;color:var(--faint)"><use href="#i-arrow"/></svg> ${esc(P[l.to].n)}${l.note ? ` <span class="tag">${esc(l.note)}</span>` : ''}</td><td><span class="mode">${mIcon(l.mode, 'ic ic--sm')}${MODEI[l.mode][1]}</span></td><td class="num">${fmtMin(l.min)}</td><td>${esc(l.carrier || '—')}</td><td>${l.alt ? esc(l.alt) : '—'}</td></tr>`).join('');
-  }
-
-  /* ---------- Comparar ---------- */
-  function renderCmp() {
-    $('#cmpTbl thead').innerHTML = `<tr><th>Rota</th>${D.criterios.map(c => `<th title="${esc(c.d)}">${esc(c.n)}</th>`).join('')}<th class="num">Custo em terra</th><th>Status</th></tr>`;
-    const order = ['recomendado', 'finalista', 'surpresa', 'sobrevivente', 'fria', 'condicional'];
-    const rs = [...D.routes].sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status));
-    const k = D.meta.cambio.eurBrl;
-    $('#cmpTbl tbody').innerHTML = rs.map(r => `<tr class="${r.status === 'recomendado' ? 'is-top' : ''}" style="--rc:${col(r)}"><td><div class="cmp__name"><i aria-hidden="true"></i>${esc(r.nome)}</div><div class="cmp__sig">${esc(r.assinatura)}</div></td>${D.criterios.map(c => { const v = r.scores[c.k]; return `<td><span class="meter" data-v="${v}" role="img" aria-label="${v} de 5">${[1, 2, 3, 4, 5].map(n => `<i class="${n <= v ? 'on' : ''}"></i>`).join('')}</span></td>`; }).join('')}<td class="num">€${r.custoEur[0].toLocaleString('pt-BR')}–${r.custoEur[1].toLocaleString('pt-BR')}<span class="alt">≈ R$${Math.round(r.custoEur[0] * k / 100) / 10}k–${Math.round(r.custoEur[1] * k / 100) / 10}k · ${esc(r.custoNota)}</span></td><td><span class="badge badge--${r.status}">${esc(r.statusLabel)}</span></td></tr>`).join('');
-  }
-
-  /* ---------- Votos + notas ---------- */
-  function renderVotes() {
-    const u = me(), g = $('#voteGrid');
-    const people = be.needsAuth
-      ? Object.values(S.votes.reduce((a, v) => { a[v.user_id] = { id: v.user_id, ...v.profiles }; return a; }, { [u.id]: { id: u.id, initial: u.initial, display_name: u.name } }))
-      : Object.entries(PEOPLE).map(([id, p]) => ({ id, initial: p.initial, display_name: p.name }));
-    const cols = people.slice(0, 2);
-    g.style.gridTemplateColumns = `1fr ${cols.map(() => 'auto').join(' ')}`;
-    g.innerHTML = `<span></span>${cols.map(p => `<span class="vh" title="${esc(p.display_name)}">${esc(p.initial)}</span>`).join('')}` +
-      D.routes.map(r => `<div class="vote__row"><div class="vote__name" style="--rc:${col(r)}"><i aria-hidden="true"></i><span>${esc(r.nome)}</span></div>${cols.map(p => { const v = S.votes.find(x => x.user_id === p.id && x.route_id === r.id); const mine = p.id === u.id; return `<button class="heart" type="button" aria-pressed="${!!(v && v.value)}" aria-label="${mine ? 'Votar em' : 'Voto de ' + esc(p.display_name) + ' em'} ${esc(r.nome)}" data-r="${r.id}" ${mine ? '' : 'disabled'}>${icon('i-heart')}</button>`; }).join('')}</div>`).join('');
-    g.querySelectorAll('.heart:not([disabled])').forEach(b => b.addEventListener('click', async () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); await be.setVote(b.dataset.r, on); S = await be.loadState(); renderVotes(); }));
-  }
-  function renderNotes() {
-    const u = me();
-    $('#notes').innerHTML = S.notes.filter(n => n.user_id !== u.id && n.body).map(n => `<div class="note-card"><div class="note-card__h"><span class="idea__who">${esc(n.profiles?.initial)}</span>${esc(n.profiles?.display_name)}</div><p>${esc(n.body)}</p></div>`).join('') || `<p style="color:var(--faint);font-size:var(--fs-sec)">Nenhuma nota da outra pessoa ainda.</p>`;
-    const mine = S.notes.find(n => n.user_id === u.id); $('#noteMine').value = mine ? mine.body : '';
-  }
-  $('#noteSave').addEventListener('click', async () => { const b = $('#noteSave'); b.disabled = true; b.textContent = 'Salvando…'; await be.setNote($('#noteMine').value.trim()); S = await be.loadState(); renderNotes(); b.disabled = false; b.textContent = 'Salvar nota'; });
+  /* ---------- bottom sheet (mobile) ---------- */
+  (() => {
+    const panel = $('#panel'), handle = $('#handle'); let y0 = 0, st = 'half';
+    const set = (s) => { st = s; panel.dataset.sheet = s; setTimeout(() => map && map.resize(), 280); };
+    handle.addEventListener('click', () => set(st === 'full' ? 'half' : 'full'));
+    handle.addEventListener('pointerdown', (e) => { y0 = e.clientY; handle.setPointerCapture(e.pointerId); });
+    handle.addEventListener('pointerup', (e) => { const dy = e.clientY - y0; if (Math.abs(dy) < 30) return; if (dy < 0) set(st === 'peek' ? 'half' : 'full'); else set(st === 'full' ? 'half' : 'peek'); });
+  })();
 
   start();
 })();

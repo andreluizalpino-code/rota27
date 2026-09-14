@@ -266,7 +266,22 @@ a { color: inherit; }
 .card__name { font-family: var(--font-display); font-weight: 600; font-size: 1.25rem; line-height: 1.1; }
 .card__sub { color: var(--ink-2); font-size: var(--fs-label); font-weight: 500; margin-top: 2px; }
 .card__sig { font-style: italic; color: var(--ink-2); font-size: var(--fs-sec); margin: 8px 0 0 8px; }
-.card__stats { display: flex; gap: var(--s3); flex-wrap: wrap; margin: 12px 0 0 8px; }
+.card__tiles { display: grid; grid-template-columns: 1fr 1fr 2.2fr; gap: 8px; margin: 14px 0 0 8px; }
+.tile { background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 12px; min-height: 66px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.tile b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 600; line-height: 1.1; }
+.tile b.txt { font-family: var(--font-display); font-size: 1rem; line-height: 1.2; }
+.tile span { font-size: var(--fs-label); color: var(--ink-3); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-top: 3px; }
+/* orçamento do casal por rota: em terra + voo internacional = total contra o teto */
+.budget { margin: 10px 0 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px 12px; display: grid; gap: 7px; }
+.budget__t { font-size: var(--fs-label); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+.budget__row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: var(--fs-sec); color: var(--ink-2); font-weight: 500; }
+.budget__row small { display: block; color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
+.budget__row b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.budget__row--total { border-top: 1px solid var(--line-2); padding-top: 8px; margin-top: 2px; color: var(--ink); font-weight: 700; }
+.budget__row--total b { font-size: 1.15rem; }
+.budget__verdict { font-size: var(--fs-label); font-weight: 700; display: inline-flex; align-items: center; gap: 7px; }
+.budget__verdict::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+.is-ok { color: var(--ok); } .is-warn { color: var(--warn); } .is-neg { color: var(--neg); }
 .crit { display: grid; gap: 6px; margin: 14px 0 0 8px; }
 .crit__row { display: grid; grid-template-columns: 1fr 120px 24px; gap: 10px; align-items: center; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); }
 .meter { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
@@ -857,16 +872,28 @@ a { color: inherit; }
     return `<div class="legs" style="--rc:${col(r)}"><div class="stats" style="margin:4px 0 8px"><div class="stat"><b>${main.length}</b><span>trechos</span></div><div class="stat"><b>${fmtMin(total)}</b><span>em trânsito</span></div><div class="stat"><b>${Object.keys(by).map(m => `${by[m]}<span style="display:inline-flex;vertical-align:-2px;margin:0 6px 0 2px">${mIcon(m, 'ic ic--s')}</span>`).join('')}</b><span>por modo</span></div></div>` +
       r.legs.map((L, i) => `<div class="legrow ${i === legIdx ? 'is-active' : ''}" data-leg="${i}" role="button" tabindex="0"><span class="legrow__n mono">${i + 1}</span><span class="move__ic">${mIcon(L.mode, 'ic')}</span><div><div class="legrow__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}${L.note ? ` <span class="chip">${esc(L.note)}</span>` : ''}</div><div class="legrow__c"><b>${MODEI[L.mode][1]}</b> · ${esc(L.carrier || '—')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="legrow__d">${fmtMin(L.min)}</div></div>`).join('') + `</div>`;
   }
+  const PAIS = { IT: 'Itália', MT: 'Malta', TR: 'Turquia', GR: 'Grécia', AL: 'Albânia', HR: 'Croácia', SI: 'Eslovênia', ME: 'Montenegro' };
+  const mil = (v) => (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+  function budgetHTML(r) {
+    const m = D.meta, k = m.cambio.eurBrl, voo = m.passagem.valor, terra = [r.custoEur[0] * k, r.custoEur[1] * k], tot = [voo + terra[0], voo + terra[1]];
+    const { base, teto } = m.orcamento;
+    const v = tot[1] <= base ? ['is-ok', `dentro do orçamento de R$${mil(base)} mil`] : tot[1] <= teto ? ['is-ok', `usa a margem · teto R$${mil(teto)} mil`] : tot[0] <= teto ? ['is-warn', `faixa alta passa do teto de R$${mil(teto)} mil`] : ['is-neg', `acima do teto de R$${mil(teto)} mil`];
+    return `<div class="budget"><div class="budget__t">Orçamento estimado · 2 pessoas</div>
+      <div class="budget__row"><span>Em terra<small>hotel, carro, balsas, voos internos, comida · €${r.custoEur[0].toLocaleString('pt-BR')}–${r.custoEur[1].toLocaleString('pt-BR')} a ${k.toLocaleString('pt-BR')}</small></span><b>R$${mil(terra[0])}–${mil(terra[1])} mil</b></div>
+      <div class="budget__row"><span>Voo internacional<small>${esc(m.saida.de)} ⇄ ${esc(m.saida.para)} · ${esc(m.passagem.classe)}</small></span><b>R$${mil(voo)} mil</b></div>
+      <div class="budget__row budget__row--total"><span>Total estimado</span><b>R$${mil(tot[0])}–${mil(tot[1])} mil</b></div>
+      <span class="budget__verdict ${v[0]}">${v[1]}</span></div>`;
+  }
   function compareHTML() {
     const order = ['recomendado', 'finalista', 'surpresa', 'sobrevivente', 'fria', 'condicional'];
     const rs = [...D.routes].sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status));
-    const k = D.meta.cambio.eurBrl;
     return `<div class="cmp"><p class="cmp__intro">Sete rotas, sete critérios de 1 a 5. Passe o mouse para destacar no mapa; "Ver roteiro" abre o dia a dia.</p>` + rs.map(r => {
       const c = col(r), nights = r.stops.reduce((a, s) => a + s.nights, 0);
       return `<section class="card ${r.status === 'recomendado' ? 'card--top' : ''}" style="--rc:${c}" data-route="${r.id}">
         <div class="card__h"><div style="flex:1"><div class="card__name">${esc(r.nome)}</div><div class="card__sub">${esc(r.sub)}</div></div><span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span></div>
         <p class="card__sig">${esc(r.assinatura)}</p>
-        <div class="card__stats"><div class="stat"><b>${nights}</b><span>noites</span></div><div class="stat"><b>${r.stops.length}</b><span>bases</span></div><div class="stat"><b>${r.paises.join('·')}</b><span>países</span></div><div class="stat"><b>€${r.custoEur[0].toLocaleString('pt-BR')}–${r.custoEur[1].toLocaleString('pt-BR')}</b><span>≈ R$${Math.round(r.custoEur[0] * k / 1000)}–${Math.round(r.custoEur[1] * k / 1000)} mil</span></div></div>
+        <div class="card__tiles"><div class="tile"><b>${nights}</b><span>noites</span></div><div class="tile"><b>${r.stops.length}</b><span>bases</span></div><div class="tile"><b class="txt">${r.paises.map(p => PAIS[p] || p).join(' · ')}</b><span>países</span></div></div>
+        ${budgetHTML(r)}
         <div class="crit">${D.criterios.map(cr => { const v = r.scores[cr.k]; return `<div class="crit__row"><span title="${esc(cr.d)}">${esc(cr.n)}</span><span class="meter" data-v="${v}" style="--v:${v}"><i></i></span><span class="crit__v">${v}</span></div>`; }).join('')}</div>
         <p class="card__risk">${esc(r.custoNota)} · ${esc(r.riscos[0])}</p>
         <div class="card__act"><button class="btn btn--primary" type="button" data-go="${r.id}">${icon('i-map', 'ic ic--s')}Ver roteiro</button></div>

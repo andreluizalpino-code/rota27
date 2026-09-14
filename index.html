@@ -282,8 +282,8 @@ a { color: inherit; }
 .budget__verdict { font-size: var(--fs-label); font-weight: 700; display: inline-flex; align-items: center; gap: 7px; }
 .budget__verdict::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
 .is-ok { color: var(--ok); } .is-warn { color: var(--warn); } .is-neg { color: var(--neg); }
-.crit { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin: 12px 0 0 8px; }
-.crit__row { display: grid; grid-template-columns: minmax(0, 1fr) 60px 22px; gap: 6px; align-items: center; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); }
+.crit { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin: 12px 0 0 8px; }
+.crit__row { display: grid; grid-template-columns: minmax(0, 1fr) 52px 20px; gap: 6px; align-items: center; font-size: var(--fs-label); font-weight: 700; color: var(--ink-2); }
 .crit__row > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .meter { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
 .meter i { display: block; height: 100%; width: calc(var(--v) * 20%); background: var(--rc); border-radius: 999px; }
@@ -589,9 +589,9 @@ a { color: inherit; }
   function buildMap() {
     map = new maplibregl.Map({ container: 'map', style: STYLES.light, center: [17.5, 40.6], zoom: 4.6, attributionControl: { compact: true }, cooperativeGestures: false });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    map.on('load', () => { mapReady = true; paintMap(); applyVisibility(); buildMarkers(R()); fitRoute(); if (view === 'comparar') fitAll(); else if (dayIdx >= 0) selectDay(dayIdx); });
+    map.on('load', () => { mapReady = true; paintMap(); applyVisibility(); buildMarkers(R()); fitRoute(); if (view === 'comparar') { cmpCur = null; const c = cmpCards()[cmpIdx()]; if (c) cmpFocus(c.dataset.route); } else if (dayIdx >= 0) selectDay(dayIdx); });
     map.on('style.load', () => { if (mapReady) paintMap(); });
-    $('#fitBtn').addEventListener('click', () => fitRoute());
+    $('#fitBtn').addEventListener('click', () => fitRoute(view === 'comparar' && cmpCur ? D.routes.find(x => x.id === cmpCur) : R()));
   }
   const arc = (a, b) => {
     const n = 32, pts = [];
@@ -649,11 +649,13 @@ a { color: inherit; }
     applyVisibility();
   }
   const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
+  const setOp = (lid, v, dur) => { map.setPaintProperty(lid, 'line-opacity-transition', { duration: dur, delay: 0 }); map.setPaintProperty(lid, 'line-opacity', v); };
   function applyVisibility() {
     if (!mapReady) return;
+    const cmp = view === 'comparar';
     D.routes.forEach(r => {
-      const on = view === 'comparar' || r.id === routeId, id = `route-${r.id}`;
-      LAYER_KEYS.forEach(k => { const lid = `${id}-${k}`; if (map.getLayer(lid)) { map.setLayoutProperty(lid, 'visibility', on ? 'visible' : 'none'); map.setPaintProperty(lid, 'line-opacity', view === 'comparar' ? (r.id === routeId ? 1 : .55) : (k === 'casing' ? .9 : 1)); } });
+      const on = cmp || r.id === routeId, id = `route-${r.id}`;
+      LAYER_KEYS.forEach(k => { const lid = `${id}-${k}`; if (!map.getLayer(lid)) return; setOp(lid, cmp ? 0 : (k === 'casing' ? .9 : 1), 0); map.setLayoutProperty(lid, 'visibility', on ? 'visible' : 'none'); });
     });
   }
   const legMid = (L) => {
@@ -703,16 +705,18 @@ a { color: inherit; }
     };
     runnerRaf = requestAnimationFrame(step);
   }
+  let markersFor = null;
   function buildMarkers(r) {
-    markers.forEach(m => m.remove()); markers = [];
+    markers.forEach(m => m.remove()); markers = []; markersFor = r.id;
     const c = col(r);
+    const goDay = (find) => { if (r.id !== routeId) setRoute(r.id, { keepView: true }); if (view !== 'roteiro') setView('roteiro'); const di = days.findIndex(find); if (di >= 0) selectDay(di, { scroll: true }); };
     const mkEl = (html, cls, title) => { const el = document.createElement('button'); el.type = 'button'; el.className = `pin ${cls}`; el.style.setProperty('--rc', c); el.innerHTML = html; el.setAttribute('aria-label', title); el.title = title; return el; };
     const g = mkEl(icon('i-plane'), 'pin--gate', 'Roma FCO · entrada e saída');
-    g.addEventListener('click', () => selectDay(0, { scroll: true }));
+    g.addEventListener('click', () => goDay(d => d.kind === 'out'));
     markers.push(new maplibregl.Marker({ element: g }).setLngLat([P.fco.lng, P.fco.lat]).addTo(map));
     r.stops.forEach((s, i) => {
       const p = P[s.place], el = mkEl(String(i + 1), '', `${i + 1} · ${s.titulo}`);
-      el.addEventListener('click', () => { const di = days.findIndex(d => d.si === i); if (di >= 0) selectDay(di, { scroll: true }); });
+      el.addEventListener('click', () => goDay(d => d.si === i));
       markers.push(new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map));
     });
   }
@@ -730,12 +734,14 @@ a { color: inherit; }
     render();
   }
   function setView(v) {
+    const fromCmp = view === 'comparar' && v !== 'comparar';
     view = v; $('#body').dataset.view = v;
     $('#tabs').querySelectorAll('[role=tab]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.view === v)));
     applyVisibility();
-    if (v === 'comparar') { setActiveLegs([]); setPlaceLabels([]); markers.forEach(m => m.getElement().classList.add('pin--dim')); fitAll(); $('#routeCard').innerHTML = `<div class="route-card__t">${D.routes.length} rotas no mapa</div><div class="route-card__s">Passe o mouse num cartão para destacar</div>`; }
-    else { markers.forEach(m => m.getElement().classList.remove('pin--dim')); if (v === 'roteiro' && dayIdx < 0) fitRoute(); }
+    if (v === 'comparar') { setActiveLegs([]); setPlaceLabels([]); cmpCur = null; }
+    else { if (mapReady && markersFor !== routeId) buildMarkers(R()); $('#legend')?.style.setProperty('--rc', col(R())); if (v === 'roteiro' && dayIdx < 0) fitRoute(); }
     render();
+    if (fromCmp && mapReady) { if (v === 'roteiro' && dayIdx >= 0) selectDay(dayIdx); else { fitRoute(); const r = R(); $('#routeCard').innerHTML = `<div class="route-card__t"><span class="dot" style="--rc:${col(r)}"></span>${esc(r.nome)} <span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span></div><div class="route-card__s">${esc(r.sub)}</div>`; } }
     $('#panel').scrollTop = 0;
     if (map) setTimeout(() => map.resize(), 280);
   }
@@ -804,7 +810,7 @@ a { color: inherit; }
   panelEl.addEventListener('scroll', () => {
     if (view !== 'comparar') return; clearTimeout(cmpScrollT);
     cmpScrollT = setTimeout(() => {
-      const i = cmpIdx(), c = cmpCards()[i]; if (!c) return; hi(c.dataset.route);
+      const i = cmpIdx(), c = cmpCards()[i]; if (!c) return; cmpFocus(c.dataset.route);
       if (innerWidth > 900 && performance.now() > snapping && Math.abs(c.offsetTop - 12 - panelEl.scrollTop) > 2) snapTo(i);   // barra de rolagem solta fora do encaixe
     }, 160);
   }, { passive: true });
@@ -970,17 +976,25 @@ a { color: inherit; }
     if (view === 'trechos') el.querySelectorAll('.legrow').forEach(row => { const go = () => { legIdx = +row.dataset.leg; el.querySelectorAll('.legrow').forEach(x => x.classList.toggle('is-active', x === row)); const L = r.legs[legIdx]; setActiveLegs([L], null, { n0: legIdx + 1 }); setPlaceLabels([L.from, L.to]); const b = new maplibregl.LngLatBounds(); legCoords(L).forEach(pt => b.extend(pt)); map.fitBounds(b, { padding: padding(), duration: reduced ? 0 : 800, maxZoom: 9.5 }); }; row.addEventListener('click', go); row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
     if (view === 'comparar') {
       el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { setRoute(b.dataset.go); setView('roteiro'); }));
-      el.querySelectorAll('.card').forEach(c => { c.addEventListener('mouseenter', () => hi(c.dataset.route)); c.addEventListener('mouseleave', () => hi(cmpCards()[cmpIdx()]?.dataset.route || null)); });
-      if (view === 'comparar') setTimeout(() => hi(cmpCards()[cmpIdx()]?.dataset.route || null), 60);
+      if (view === 'comparar') setTimeout(() => { const c = cmpCards()[cmpIdx()]; if (c) cmpFocus(c.dataset.route, { relight: true }); }, 60);
     }
     if (view === 'decidir') {
       el.querySelectorAll('[data-vote]:not([disabled])').forEach(b => b.addEventListener('click', async () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); await be.setVote(b.dataset.vote, on); S = await be.loadState(); render(); }));
       $('#noteSave')?.addEventListener('click', async () => { const b = $('#noteSave'); b.disabled = true; b.textContent = 'Salvando…'; await be.setNote($('#noteMine').value.trim()); S = await be.loadState(); render(); });
     }
   }
+  /* comparar: só a rota do cartão em tela fica acesa; as outras apagam em fade. Trocar de cartão reenquadra o mapa nessa rota. */
+  let cmpCur = null;
   function hi(id) {
     if (!mapReady || view !== 'comparar') return;
-    D.routes.forEach(r => ['land', 'rail', 'ferry', 'plane'].forEach(k => { const lid = `route-${r.id}-${k}`; if (map.getLayer(lid)) map.setPaintProperty(lid, 'line-opacity', id ? (r.id === id ? 1 : .18) : .55); }));
+    D.routes.forEach(r => LAYER_KEYS.forEach(k => { const lid = `route-${r.id}-${k}`; if (map.getLayer(lid)) setOp(lid, r.id === id ? (k === 'casing' ? .9 : 1) : 0, 650); }));
+  }
+  function cmpFocus(id, { relight = false } = {}) {
+    const changed = id !== cmpCur; if (!id || (!changed && !relight)) return;
+    const r = D.routes.find(x => x.id === id); if (!r) return; cmpCur = id;
+    hi(id); $('#legend')?.style.setProperty('--rc', col(r));
+    $('#routeCard').innerHTML = `<div class="route-card__t"><span class="dot" style="--rc:${col(r)}"></span>${esc(r.nome)} <span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span></div><div class="route-card__s">${esc(r.sub)}</div>`;
+    if (mapReady && changed) { buildMarkers(r); fitRoute(r); }
   }
   function openIdeaForm(dayEl, stop_place) {
     if (dayEl.querySelector('.idea-form')) return;

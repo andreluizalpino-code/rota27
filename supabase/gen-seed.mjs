@@ -7,6 +7,7 @@ const evalWindow = async (rel) => { const ctx = { window: {} }; vm.runInNewConte
 const payload = (await evalWindow('../data/routes.js')).ROTA27;
 payload.guia = (await evalWindow('../data/guia.js')).ROTA27_GUIA;
 payload.geo = (await evalWindow('../data/geo.js')).ROTA27_GEO;
+payload.crit = (await evalWindow('../data/criterios.js')).ROTA27_CRIT;
 const json = JSON.stringify(payload);
 if (json.includes('$r27$')) throw new Error('payload contém o delimitador $r27$');
 const sql = `-- ROTA 27 · semeadura do conteúdo + guia (gerado em ${new Date().toISOString().slice(0, 10)})

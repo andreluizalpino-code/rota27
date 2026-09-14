@@ -6,3 +6,4 @@ supabase/fix-users.sql
 data/guia.js
 data/geo.js
 supabase/change-email.sql
+data/criterios.js

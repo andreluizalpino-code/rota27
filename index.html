@@ -302,14 +302,14 @@ a { color: inherit; }
 .card__h { display: flex; align-items: flex-start; gap: 10px; padding-left: 8px; }
 .card__name { font-family: var(--font-display); font-weight: 600; font-size: 1.25rem; line-height: 1.1; }
 .card__sub { color: var(--ink-2); font-size: var(--fs-label); font-weight: 500; margin-top: 2px; }
-.card__sig { font-style: italic; color: var(--ink-2); font-size: var(--fs-sec); margin: 8px 0 0 8px; }
+.card__sig { font-style: italic; color: var(--ink-2); font-size: var(--fs-sec); margin: 6px 0 0 8px; }
 .card__tiles { display: grid; grid-template-columns: 1fr 1fr 2.2fr; gap: 8px; margin: 12px 0 0 8px; }
-.tile { background: var(--surface-2); border-radius: var(--r-sm); padding: 8px 12px; min-height: 54px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.tile { background: var(--surface-2); border-radius: var(--r-sm); padding: 7px 12px; min-height: 50px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .tile b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 600; line-height: 1.1; }
 .tile b.txt { font-family: var(--font-display); font-size: 1rem; line-height: 1.2; }
 .tile span { font-size: var(--fs-label); color: var(--ink-3); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-top: 3px; }
 /* orçamento do casal por rota: em terra + voo internacional = total contra o teto */
-.budget { margin: 10px 0 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 12px 10px; display: grid; gap: 5px; }
+.budget { margin: 8px 0 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 12px 9px; display: grid; gap: 4px; }
 .budget__t { font-size: var(--fs-label); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
 .budget__row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: var(--fs-sec); color: var(--ink-2); font-weight: 500; }
 .budget__row small { display: block; color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
@@ -331,7 +331,7 @@ a { color: inherit; }
 .meter[data-v="1"] i, .meter[data-v="2"] i { background: var(--warn); }
 .crit__v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; color: var(--ink); }
 .card__act { display: flex; gap: 8px; margin: auto 0 0 8px; padding-top: 12px; flex-wrap: wrap; }
-.card__risk { color: var(--ink-3); font-size: var(--fs-label); margin: 10px 0 0 8px; line-height: 1.4; }
+.card__risk { color: var(--ink-3); font-size: var(--fs-label); margin: 8px 0 0 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* ---------- decidir ---------- */
 .dec { padding: var(--s3); display: grid; gap: var(--s4); }
@@ -495,7 +495,8 @@ a { color: inherit; }
   const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   const PALETTE = {
     fogo:     ['#D93B2B', '#F0644F'], epiro:    ['#0E8C7F', '#3FBFAF'], albania:  ['#5A8A16', '#9CCB3D'],
-    dalmata:  ['#2F6BE0', '#6B9BFF'], vertical: ['#7A3FE0', '#B08CFF'], egeu:     ['#C77700', '#F2B84B'], jonico: ['#D1367A', '#F27BB0'], licia: ['#B4531B', '#F0915A']
+    dalmata:  ['#2F6BE0', '#6B9BFF'], vertical: ['#7A3FE0', '#B08CFF'], egeu:     ['#C77700', '#F2B84B'], jonico: ['#D1367A', '#F27BB0'], licia: ['#B4531B', '#F0915A'],
+    ciclades: ['#0891B2', '#5CD5F2'], salento: ['#7D1D3F', '#E27A98']
   };
   const STATUS = { recomendado: 'chip--accent', finalista: 'chip--ok', surpresa: 'chip--ok', sobrevivente: '', fria: '', condicional: 'chip--warn' };
 

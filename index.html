@@ -102,6 +102,7 @@ a { color: inherit; }
 
 .body { display: grid; grid-template-columns: var(--panel-w) 1fr; min-height: 0; }
 .body[data-view="comparar"] { --panel-w: 560px; }
+.body[data-view="decidir"] { --panel-w: 780px; }
 .panel { position: relative; background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: flex; flex-direction: column; }
 .panel__handle { display: none; }
 .stage { position: relative; min-height: 0; background: var(--surface-2); }
@@ -338,6 +339,48 @@ a { color: inherit; }
 /* ---------- decidir ---------- */
 .dec { padding: var(--s3); display: grid; gap: var(--s4); }
 .dec h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin-bottom: 8px; }
+.dec__head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.dec__head h3 { margin: 0; }
+.dec__head .btn { margin-left: auto; }
+.dec__hint { font-size: var(--fs-sec); color: var(--ink-2); }
+/* sugestão do grupo: pódio */
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pod { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); padding: 12px 14px; position: relative; overflow: hidden; }
+.pod::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--rc); }
+.pod--1 { border-color: var(--rc); box-shadow: var(--shadow); }
+.pod__n { font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 600; color: var(--ink-3); }
+.pod__t { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; line-height: 1.15; margin: 2px 0 4px; }
+.pod__pts { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+.pod__who { font-size: var(--fs-label); color: var(--ink-2); margin-top: 4px; line-height: 1.4; }
+.dec__wait { font-size: var(--fs-label); font-weight: 700; color: var(--warn); margin-top: 8px; }
+/* lista ordenável */
+.rank { list-style: none; display: grid; gap: 8px; }
+.rrow { display: grid; grid-template-columns: 22px 34px 1fr 52px; gap: 10px; align-items: start; padding: 10px 10px 10px 8px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); transition: box-shadow var(--ease), border-color var(--ease); }
+.rrow:hover { border-color: var(--rc); }
+.rrow.is-drag { opacity: .45; }
+.rrow.is-over { box-shadow: 0 -3px 0 0 var(--rc); }
+.rrow__grip { color: var(--ink-3); cursor: grab; font-size: 1.1rem; line-height: 1; padding-top: 8px; text-align: center; user-select: none; }
+.rrow__grip:active { cursor: grabbing; }
+.rrow__pos { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--rc); color: #fff; font-family: var(--font-mono); font-weight: 600; margin-top: 2px; }
+.rrow__t { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 700; font-size: var(--fs-sec); min-height: 34px; }
+.rrow__t .chip { height: 24px; font-size: .8rem; }
+.rrow__cost { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink-2); }
+.rrow__cost { margin-left: auto; }
+.rrow__grp { display: block; margin-top: 3px; font-size: var(--fs-label); font-weight: 600; color: var(--ink-2); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.body[data-view="decidir"] .legend, .body[data-view="decidir"] .map-actions { display: none; }
+.rrow__hearts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.hb { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px 0 7px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); font-size: var(--fs-label); font-weight: 700; cursor: pointer; transition: background var(--ease), border-color var(--ease), color var(--ease); }
+.hb .ic { width: 15px; height: 15px; }
+.hb b { font-family: var(--font-mono); font-weight: 600; color: var(--ink-3); }
+.hb:hover { border-color: var(--rc); color: var(--ink); background: color-mix(in srgb, var(--rc) 8%, var(--surface)); }
+.hb[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.hb[aria-pressed="true"] .ic { fill: currentColor; }
+.hb[aria-pressed="true"] b { color: rgba(255,255,255,.85); }
+.hb[disabled] { cursor: default; opacity: .7; }
+.rrow__mv { display: grid; gap: 4px; }
+.rrow__mv button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); font-size: .8rem; }
+.rrow__mv button:hover { border-color: var(--rc); color: var(--ink); }
+.pin--hide { display: none !important; }
 .votes { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: center; }
 .votes .vh { text-align: center; }
 .vrow { display: contents; }
@@ -517,8 +560,10 @@ a { color: inherit; }
       user() { const w = load('rota27.who', 'andre'); return { id: w, ...PEOPLE[w] }; },
       setWho(w) { store('rota27.who', w); }, async signOut() {},
       async loadContent() { if (!window.ROTA27) throw new Error('routes.js'); return window.ROTA27; },
-      async loadState() { return { votes: load('rota27.votes', []), notes: load('rota27.notes', []), ideas: load('rota27.ideas', []) }; },
+      async loadState() { return { votes: load('rota27.votes', []), notes: load('rota27.notes', []), ideas: load('rota27.ideas', []), ranking: load('rota27.ranking', []), hearts: load('rota27.hearts', []), people: Object.entries(PEOPLE).map(([id, p]) => ({ id, initial: p.initial, display_name: p.name })) }; },
       _p(u) { return { initial: u.initial, display_name: u.name }; },
+      async setRanking(order) { const u = this.user(), now = new Date().toISOString(); const rows = load('rota27.ranking', []).filter(x => x.user_id !== u.id); order.forEach((route_id, i) => rows.push({ user_id: u.id, route_id, pos: i + 1, updated_at: now, profiles: this._p(u) })); store('rota27.ranking', rows); },
+      async setHeart(route_id, crit, on) { const u = this.user(); const h = load('rota27.hearts', []).filter(x => !(x.user_id === u.id && x.route_id === route_id && x.crit === crit)); if (on) h.push({ user_id: u.id, route_id, crit, profiles: this._p(u) }); store('rota27.hearts', h); },
       async setVote(route_id, value) { const u = this.user(); const v = load('rota27.votes', []).filter(x => !(x.user_id === u.id && x.route_id === route_id)); v.push({ user_id: u.id, route_id, value, profiles: this._p(u) }); store('rota27.votes', v); },
       async setNote(body) { const u = this.user(); const n = load('rota27.notes', []).filter(x => x.user_id !== u.id); n.push({ user_id: u.id, body, profiles: this._p(u) }); store('rota27.notes', n); },
       async addIdea(i) { const u = this.user(); const a = load('rota27.ideas', []); a.unshift({ id: Date.now(), user_id: u.id, created_at: new Date().toISOString(), profiles: this._p(u), ...i }); store('rota27.ideas', a); },
@@ -538,17 +583,22 @@ a { color: inherit; }
       async loadContent() { const { data, error } = await this.c.from('r27_content').select('payload').eq('id', 'rota27').single(); if (error) throw error; return data.payload; },
       async loadState() {
         const Pf = 'profiles:r27_profiles(initial,display_name)';
-        const [v, n, i] = await Promise.all([
+        const [v, n, i, rk, h, pp] = await Promise.all([
           this.c.from('r27_votes').select(`user_id,route_id,value,${Pf}`),
           this.c.from('r27_notes').select(`user_id,body,updated_at,${Pf}`),
-          this.c.from('r27_ideas').select(`id,user_id,route_id,stop_place,kind,title,body,link,amount,currency,created_at,${Pf}`).order('created_at', { ascending: false })
+          this.c.from('r27_ideas').select(`id,user_id,route_id,stop_place,kind,title,body,link,amount,currency,created_at,${Pf}`).order('created_at', { ascending: false }),
+          this.c.from('r27_ranking').select(`user_id,route_id,pos,updated_at,${Pf}`),
+          this.c.from('r27_hearts').select(`user_id,route_id,crit,${Pf}`),
+          this.c.from('r27_profiles').select('id,initial,display_name')
         ]);
-        return { votes: v.data || [], notes: n.data || [], ideas: i.data || [] };
+        return { votes: v.data || [], notes: n.data || [], ideas: i.data || [], ranking: rk.data || [], hearts: h.data || [], people: pp.data || [] };
       },
+      async setRanking(order) { const user_id = this.user().id; await this.c.from('r27_ranking').upsert(order.map((route_id, i) => ({ user_id, route_id, pos: i + 1 })), { onConflict: 'user_id,route_id' }); },
+      async setHeart(route_id, crit, on) { const user_id = this.user().id; if (on) await this.c.from('r27_hearts').upsert({ user_id, route_id, crit }, { onConflict: 'user_id,route_id,crit' }); else await this.c.from('r27_hearts').delete().match({ user_id, route_id, crit }); },
       async setVote(route_id, value) { await this.c.from('r27_votes').upsert({ user_id: this.user().id, route_id, value }, { onConflict: 'user_id,route_id' }); },
       async setNote(body) { await this.c.from('r27_notes').upsert({ user_id: this.user().id, body }, { onConflict: 'user_id' }); },
       async addIdea(i) { await this.c.from('r27_ideas').insert({ user_id: this.user().id, ...i, link: i.link || null }); },
-      subscribe(cb) { const ch = this.c.channel('rota27'); ['r27_votes', 'r27_notes', 'r27_ideas'].forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, cb)); ch.subscribe(); }
+      subscribe(cb) { const ch = this.c.channel('rota27'); ['r27_votes', 'r27_notes', 'r27_ideas', 'r27_ranking', 'r27_hearts'].forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, cb)); ch.subscribe(); }
     }
   };
   const be = backends[MODE] || backends.local;
@@ -635,7 +685,7 @@ a { color: inherit; }
   function buildMap() {
     map = new maplibregl.Map({ container: 'map', style: STYLES.light, center: [17.5, 40.6], zoom: 4.6, attributionControl: { compact: true }, cooperativeGestures: false });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    map.on('load', () => { mapReady = true; paintMap(); applyVisibility(); buildMarkers(R()); fitRoute(); if (view === 'comparar') { cmpCur = null; const c = cmpCards()[cmpIdx()]; if (c) cmpFocus(c.dataset.route); } else if (dayIdx >= 0) selectDay(dayIdx); });
+    map.on('load', () => { mapReady = true; paintMap(); applyVisibility(); buildMarkers(R()); fitRoute(); if (view === 'comparar') { cmpCur = null; const c = cmpCards()[cmpIdx()]; if (c) cmpFocus(c.dataset.route); } else if (view === 'decidir') { markers.forEach(m => m.getElement().classList.add('pin--hide')); const first = $('#rank .rrow'); if (first) decFocus(first.dataset.route, true); } else if (dayIdx >= 0) selectDay(dayIdx); });
     map.on('style.load', () => { if (mapReady) paintMap(); });
     map.on('click', () => { if (view === 'comparar' && critPin) critUnpin(); });
     $('#fitBtn').addEventListener('click', () => fitRoute(view === 'comparar' && cmpCur ? D.routes.find(x => x.id === cmpCur) : R()));
@@ -699,7 +749,7 @@ a { color: inherit; }
   const setOp = (lid, v, dur) => { map.setPaintProperty(lid, 'line-opacity-transition', { duration: dur, delay: 0 }); map.setPaintProperty(lid, 'line-opacity', v); };
   function applyVisibility() {
     if (!mapReady) return;
-    const cmp = view === 'comparar';
+    const cmp = view === 'comparar' || view === 'decidir';
     D.routes.forEach(r => {
       const on = cmp || r.id === routeId, id = `route-${r.id}`;
       LAYER_KEYS.forEach(k => { const lid = `${id}-${k}`; if (!map.getLayer(lid)) return; setOp(lid, cmp ? 0 : (k === 'casing' ? .9 : 1), 0); map.setLayoutProperty(lid, 'visibility', on ? 'visible' : 'none'); });
@@ -710,13 +760,13 @@ a { color: inherit; }
     const h = cum[cum.length - 1] / 2; let i = 1; while (i < cum.length - 1 && cum[i] < h) i++; const f = (h - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1);
     return [cs[i - 1][0] + (cs[i][0] - cs[i - 1][0]) * f, cs[i - 1][1] + (cs[i][1] - cs[i - 1][1]) * f];
   };
-  function setActiveLegs(legs, color, { n0 = 1 } = {}) {
+  function setActiveLegs(legs, color, { n0 = 1, badges = true } = {}) {
     if (!mapReady) return;
     const c = color || col(R());
     map.getSource('active').setData({ type: 'FeatureCollection', features: legs.map(L => ({ type: 'Feature', properties: { mode: L.mode }, geometry: { type: 'LineString', coordinates: legCoords(L) } })) });
     ['glow', 'land', 'ferry', 'plane'].forEach(k => { if (map.getLayer(`active-${k}`)) map.setPaintProperty(`active-${k}`, 'line-color', c); });
     legMarkers.forEach(m => m.remove()); legMarkers = [];
-    legs.forEach((L, i) => {
+    if (badges) legs.forEach((L, i) => {
       const el = document.createElement('div'); el.className = 'legbadge'; el.style.setProperty('--rc', c);
       el.innerHTML = `<b>${n0 + i}</b>${mIcon(L.mode, 'ic')}<span>${MODEI[L.mode][1]}</span><span class="mono">${fmtMin(L.min)}</span>`;
       legMarkers.push(new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(legMid(L)).addTo(map));
@@ -786,12 +836,14 @@ a { color: inherit; }
     render();
   }
   function setView(v) {
-    const fromCmp = view === 'comparar' && v !== 'comparar';
+    const fromCmp = (view === 'comparar' || view === 'decidir') && v !== view;
     if (fromCmp) critUnpin();
     view = v; $('#body').dataset.view = v;
     $('#tabs').querySelectorAll('[role=tab]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.view === v)));
     applyVisibility();
+    markers.forEach(m => m.getElement().classList.toggle('pin--hide', v === 'decidir'));
     if (v === 'comparar') { setActiveLegs([]); setPlaceLabels([]); cmpCur = null; }
+    else if (v === 'decidir') { setActiveLegs([]); setPlaceLabels([]); decCur = null; }
     else { if (mapReady && markersFor !== routeId) buildMarkers(R()); $('#legend')?.style.setProperty('--rc', col(R())); if (v === 'roteiro' && dayIdx < 0) fitRoute(); }
     render();
     if (fromCmp && mapReady) { if (v === 'roteiro' && dayIdx >= 0) selectDay(dayIdx); else { fitRoute(); const r = R(); $('#routeCard').innerHTML = `<div class="route-card__t"><span class="dot" style="--rc:${col(r)}"></span>${esc(r.nome)} <span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span></div><div class="route-card__s">${esc(r.sub)}</div>`; } }
@@ -960,7 +1012,7 @@ a { color: inherit; }
     document.querySelectorAll('.crit__row.is-on').forEach(e => e.classList.remove('is-on'));
     if (!mapReady) return;
     setActiveLegs([]); setPlaceLabels([]); markers.forEach(m => m.getElement().classList.remove('is-focus'));
-    const r = D.routes.find(x => x.id === rid); if (r && view === 'comparar') fitRoute(r);
+    const r = D.routes.find(x => x.id === rid); if (r && view === 'comparar') fitRoute(r); else if (view === 'decidir' && decCur) decFocus(decCur, true);
   }
   $('#critbox').addEventListener('pointerenter', () => clearTimeout(critT));
   $('#critbox').addEventListener('pointerleave', critLeave);
@@ -1080,19 +1132,57 @@ a { color: inherit; }
         <div class="card__act"><button class="btn btn--primary" type="button" data-go="${r.id}">${icon('i-map', 'ic ic--s')}Ver roteiro</button></div>
       </section>`; }).join('') + `</div>`;
   }
+  /* ---------- decidir: ordem de preferência + corações por critério ---------- */
+  let decCur = null;
+  function decFocus(rid, force) {
+    if (!rid || (rid === decCur && !force)) return; decCur = rid;
+    const r = D.routes.find(x => x.id === rid); if (!r || !mapReady) return;
+    hi(rid); setPlaceLabels([]); setActiveLegs(r.legs.filter(L => !L.note), col(r), { badges: false });
+    fitB(routeBounds(r), { padding: { top: 90, bottom: 70, left: 40, right: 40 }, duration: reduced ? 0 : 700, maxZoom: 8 });
+    $('#routeCard').innerHTML = `<div class="route-card__t"><span class="dot" style="--rc:${col(r)}"></span>${esc(r.nome)}</div><div class="route-card__s">${esc(r.sub)}</div>`;
+  }
+  const RANK_ORDER = ['recomendado', 'finalista', 'surpresa', 'sobrevivente', 'fria', 'condicional'];
+  const defaultOrder = () => [...D.routes].sort((a, b) => RANK_ORDER.indexOf(a.status) - RANK_ORDER.indexOf(b.status)).map(r => r.id);
+  /* pontuação: posição (1º = N pontos … último = 1) + 1 ponto por coração; quem não salvou a ordem não pontua posição */
+  function decStats() {
+    const N = D.routes.length, u = me();
+    const people = (S.people || []).map(p => ({ id: p.id, initial: p.initial, display_name: p.display_name }));
+    if (!people.some(p => p.id === u.id)) people.unshift({ id: u.id, initial: u.initial, display_name: u.name });
+    const byUser = {}; people.forEach(p => { byUser[p.id] = { pos: {}, hearts: {}, saved: null }; });
+    (S.ranking || []).forEach(x => { const b = byUser[x.user_id]; if (!b) return; b.pos[x.route_id] = x.pos; if (!b.saved || x.updated_at > b.saved) b.saved = x.updated_at; });
+    (S.hearts || []).forEach(x => { const b = byUser[x.user_id]; if (!b) return; (b.hearts[x.route_id] = b.hearts[x.route_id] || new Set()).add(x.crit); });
+    const rows = D.routes.map(r => {
+      const per = people.map(p => { const b = byUser[p.id], pos = b.pos[r.id] || 0, h = b.hearts[r.id] ? b.hearts[r.id].size : 0; return { p, pos, h, pts: (pos ? N - pos + 1 : 0) + h }; });
+      return { r, per, total: per.reduce((a, x) => a + x.pts, 0), firsts: per.filter(x => x.pos === 1).length, hearts: per.reduce((a, x) => a + x.h, 0) };
+    }).sort((a, b) => b.total - a.total || b.firsts - a.firsts || b.hearts - a.hearts);
+    const pending = people.filter(p => !Object.keys(byUser[p.id].pos).length);
+    return { N, people, byUser, rows, pending, mine: byUser[u.id] };
+  }
   function decideHTML() {
-    const u = me();
-    const people = be.needsAuth ? Object.values(S.votes.reduce((a, v) => { a[v.user_id] = { id: v.user_id, ...v.profiles }; return a; }, { [u.id]: { id: u.id, initial: u.initial, display_name: u.name } })) : Object.entries(PEOPLE).map(([id, p]) => ({ id, initial: p.initial, display_name: p.name }));
-    const cols = people.slice(0, 2);
-    const votes = `<div class="votes" style="grid-template-columns:1fr ${cols.map(() => 'auto').join(' ')}"><span></span>${cols.map(p => `<span class="vh lbl" title="${esc(p.display_name)}">${esc(p.initial)}</span>`).join('')}` +
-      D.routes.map(r => `<div class="vrow"><div class="vname"><span class="dot" style="--rc:${col(r)}"></span>${esc(r.nome)}</div>${cols.map(p => { const v = S.votes.find(x => x.user_id === p.id && x.route_id === r.id); const mine = p.id === u.id; return `<button class="heart" type="button" aria-pressed="${!!(v && v.value)}" aria-label="${mine ? 'Votar em' : 'Voto de ' + esc(p.display_name) + ' em'} ${esc(r.nome)}" data-vote="${r.id}" ${mine ? '' : 'disabled'}>${icon('i-heart', 'ic ic--s')}</button>`; }).join('')}</div>`).join('') + `</div>`;
-    const others = S.notes.filter(n => n.user_id !== u.id && n.body);
-    const mine = S.notes.find(n => n.user_id === u.id);
-    const notes = `<div class="inbox">${others.map(n => `<div class="notecard"><div class="notecard__h"><span class="avatar avatar--xs">${esc(n.profiles?.initial)}</span>${esc(n.profiles?.display_name)}</div><p>${esc(n.body)}</p></div>`).join('') || '<p class="empty">Nenhuma nota da outra pessoa ainda.</p>'}</div>
-      <div class="field" style="margin-top:12px"><label for="noteMine">Sua nota</label><textarea id="noteMine">${esc(mine ? mine.body : '')}</textarea></div><div class="idea-form__act" style="margin-top:8px"><button class="btn" type="button" id="noteSave">Salvar nota</button></div>`;
-    const byRoute = {}; S.ideas.forEach(i => (byRoute[i.route_id] = byRoute[i.route_id] || []).push(i));
-    const inbox = Object.keys(byRoute).length ? Object.entries(byRoute).map(([rid, items]) => { const r = D.routes.find(x => x.id === rid); return `<div class="inbox__g">${esc(r ? r.nome : rid)}</div>` + items.map(i => ideaHTML(i, true)).join(''); }).join('') : '<p class="empty">Nenhuma ideia lançada ainda. Elas nascem no Roteiro, em cada base.</p>';
-    return `<div class="dec"><section><h3>Votos</h3>${votes}</section><section><h3>Notas</h3>${notes}</section><section><h3>Ideias, custos e hotéis</h3><div class="inbox">${inbox}</div></section></div>`;
+    const u = me(), st = decStats(), k = D.meta.cambio.eurBrl, voo = D.meta.passagem.valor;
+    const ord = (p) => p ? `${p}º` : '—';
+    const custo = (r) => `R$${mil(voo + r.custoEur[0] * k)}–${mil(voo + r.custoEur[1] * k)} mil`;
+    const podium = st.rows.slice(0, 3).map((x, i) => `<div class="pod pod--${i + 1}" style="--rc:${col(x.r)}"><div class="pod__n">${i + 1}º · ${x.total} pts</div><div class="pod__t">${esc(x.r.nome)}</div><div class="pod__who">${x.per.map(y => `${esc(y.p.initial)} ${ord(y.pos)} · ♥${y.h}`).join('<br>')}</div></div>`).join('');
+    const wait = st.pending.length ? `<div class="dec__wait">Aguardando a ordem de: ${st.pending.map(p => esc(p.display_name)).join(', ')}</div>` : '';
+    const myOrder = Object.keys(st.mine.pos).length ? [...D.routes].sort((a, b) => (st.mine.pos[a.id] || 99) - (st.mine.pos[b.id] || 99)).map(r => r.id) : defaultOrder();
+    const savedAt = st.mine.saved ? new Date(st.mine.saved).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : null;
+    const rows = myOrder.map((rid, i) => { const r = D.routes.find(x => x.id === rid), g = st.rows.find(x => x.r.id === rid), mineH = st.mine.hearts[rid] || new Set();
+      return `<li class="rrow" data-route="${rid}" draggable="true" style="--rc:${col(r)}">
+        <span class="rrow__grip" title="Arraste para reordenar">⋮⋮</span><span class="rrow__pos">${i + 1}</span>
+        <div>
+          <div class="rrow__t"><span class="dot"></span>${esc(r.nome)}<span class="chip ${STATUS[r.status] || ''}">${esc(r.statusLabel)}</span><span class="rrow__cost">${custo(r)}</span></div><span class="rrow__grp">${g.total} pts · ${g.per.map(y => `${esc(y.p.initial)} ${ord(y.pos)} ♥${y.h}`).join(' · ')}</span>
+          <div class="rrow__hearts">${D.criterios.map(cr => `<button class="hb" type="button" data-heart="${rid}" data-k="${cr.k}" aria-pressed="${mineH.has(cr.k)}" title="${esc(cr.d)}">${icon('i-heart', 'ic')}${esc(cr.n)}<b>${r.scores[cr.k] ?? '–'}</b></button>`).join('')}</div>
+        </div>
+        <div class="rrow__mv"><button type="button" data-mv="-1" aria-label="Subir">▲</button><button type="button" data-mv="1" aria-label="Descer">▼</button></div>
+      </li>`; }).join('');
+    const others = S.notes.filter(n => n.user_id !== u.id && n.body), mine = S.notes.find(n => n.user_id === u.id);
+    const notes = `<div class="inbox">${others.map(n => `<div class="notecard"><div class="notecard__h"><span class="avatar avatar--xs">${esc(n.profiles?.initial)}</span>${esc(n.profiles?.display_name)}</div><p>${esc(n.body)}</p></div>`).join('') || '<p class="dec__hint">Ninguém comentou ainda.</p>'}</div>
+      <div class="field" style="margin-top:12px"><label for="noteMine">Seu comentário — por que ordenou assim</label><textarea id="noteMine">${esc(mine ? mine.body : '')}</textarea></div><div class="idea-form__act" style="margin-top:8px"><button class="btn btn--primary" type="button" id="noteSave">Salvar comentário</button></div>`;
+    return `<div class="dec">
+      <section><h3>Sugestão do grupo</h3><div class="podium">${podium}</div>${wait}<p class="dec__hint" style="margin-top:8px">Conta: posição na ordem (1º = ${st.N} pontos … ${st.N}º = 1) + 1 ponto por coração. Quem não salvou a ordem pontua só corações.</p></section>
+      <section><div class="dec__head"><h3>Sua ordem</h3><span class="dec__hint" id="rankState">${savedAt ? 'Salva em ' + savedAt : 'Ainda não salva — arraste e salve'}</span><button class="btn btn--primary" type="button" id="rankSave" ${savedAt ? 'disabled' : ''}>${savedAt ? 'Salvo ✓' : 'Salvar minha ordem'}</button></div><ol class="rank" id="rank">${rows}</ol></section>
+      <section><h3>Comentários</h3>${notes}</section>
+    </div>`;
   }
   const ideaHTML = (i, withPlace) => `<div class="idea"><span class="avatar avatar--xs" title="${esc(i.profiles?.display_name)}">${esc(i.profiles?.initial || '?')}</span><div><div class="idea__kind">${esc(KINDS[i.kind] || i.kind)}${withPlace && i.stop_place && P[i.stop_place] ? ' · ' + esc(P[i.stop_place].n) : ''}</div><div class="idea__t">${esc(i.title)}</div>${i.body ? `<div class="idea__b">${esc(i.body)}</div>` : ''}${i.link ? `<div class="idea__b"><a href="${esc(i.link)}" target="_blank" rel="noopener">${esc(i.link.replace(/^https?:\/\//, '').slice(0, 44))}</a></div>` : ''}</div>${i.amount ? `<div class="idea__amt">${esc(i.currency || '€')} ${Number(i.amount).toLocaleString('pt-BR')}</div>` : '<span></span>'}</div>`;
   function renderIdeas() { document.querySelectorAll('[data-ideas]').forEach(box => { box.innerHTML = S.ideas.filter(i => i.route_id === routeId && i.stop_place === box.dataset.ideas).map(i => ideaHTML(i, false)).join(''); }); }
@@ -1135,14 +1225,33 @@ a { color: inherit; }
       });
     }
     if (view === 'decidir') {
-      el.querySelectorAll('[data-vote]:not([disabled])').forEach(b => b.addEventListener('click', async () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); await be.setVote(b.dataset.vote, on); S = await be.loadState(); render(); }));
+      const list = $('#rank'), saveBtn = $('#rankSave');
+      const renumber = () => { list.querySelectorAll('.rrow').forEach((li, i) => li.querySelector('.rrow__pos').textContent = i + 1); };
+      const dirty = () => { renumber(); saveBtn.disabled = false; saveBtn.textContent = 'Salvar minha ordem'; $('#rankState').textContent = 'Ordem alterada — não salva'; };
+      let dragEl = null;
+      list.querySelectorAll('.rrow').forEach(li => {
+        li.addEventListener('dragstart', (e) => { dragEl = li; li.classList.add('is-drag'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', li.dataset.route); });
+        li.addEventListener('dragend', () => { li.classList.remove('is-drag'); list.querySelectorAll('.is-over').forEach(x => x.classList.remove('is-over')); });
+        li.addEventListener('dragover', (e) => { e.preventDefault(); if (!dragEl || dragEl === li) return; const b = li.getBoundingClientRect(); const before = e.clientY < b.top + b.height / 2; list.insertBefore(dragEl, before ? li : li.nextSibling); dirty(); });
+        li.addEventListener('pointerenter', () => decFocus(li.dataset.route));
+        li.querySelectorAll('[data-mv]').forEach(b => b.addEventListener('click', () => { const d = +b.dataset.mv; const sib = d < 0 ? li.previousElementSibling : li.nextElementSibling; if (!sib) return; list.insertBefore(d < 0 ? li : sib, d < 0 ? sib : li); dirty(); }));
+      });
+      list.addEventListener('drop', (e) => e.preventDefault());
+      el.querySelectorAll('.hb').forEach(hb => {
+        const rid = hb.dataset.heart, k = hb.dataset.k;
+        hb.addEventListener('pointerenter', () => { decFocus(rid); critOpen(rid, k); });
+        hb.addEventListener('pointerleave', critLeave);
+        hb.addEventListener('click', async () => { const on = hb.getAttribute('aria-pressed') !== 'true'; hb.setAttribute('aria-pressed', on); await be.setHeart(rid, k, on); S = await be.loadState(); const cur = list.querySelectorAll('.rrow'); /* atualiza só os totais, sem perder a ordem em edição */ const st = decStats(); cur.forEach(li => { const g = st.rows.find(x => x.r.id === li.dataset.route); li.querySelector('.rrow__grp').textContent = `${g.total} pts · ${g.per.map(y => `${y.p.initial} ${y.pos ? y.pos + 'º' : '—'} ♥${y.h}`).join(' · ')}`; }); });
+      });
+      saveBtn.addEventListener('click', async () => { saveBtn.disabled = true; saveBtn.textContent = 'Salvando…'; await be.setRanking([...list.querySelectorAll('.rrow')].map(li => li.dataset.route)); S = await be.loadState(); render(); });
       $('#noteSave')?.addEventListener('click', async () => { const b = $('#noteSave'); b.disabled = true; b.textContent = 'Salvando…'; await be.setNote($('#noteMine').value.trim()); S = await be.loadState(); render(); });
+      setTimeout(() => { const first = list.querySelector('.rrow'); if (first) decFocus(first.dataset.route, true); }, 80);
     }
   }
   /* comparar: só a rota do cartão em tela fica acesa; as outras apagam em fade. Trocar de cartão reenquadra o mapa nessa rota. */
   let cmpCur = null;
   function hi(id) {
-    if (!mapReady || view !== 'comparar') return;
+    if (!mapReady || (view !== 'comparar' && view !== 'decidir')) return;
     D.routes.forEach(r => LAYER_KEYS.forEach(k => { const lid = `route-${r.id}-${k}`; if (map.getLayer(lid)) setOp(lid, r.id === id ? (k === 'casing' ? .9 : 1) : 0, 650); }));
   }
   function cmpFocus(id, { relight = false } = {}) {

@@ -1,0 +1,30 @@
+# Mant√©m o projeto Supabase (plano gr√°tis) ativo: uma chamada a cada 3 dias.
+# O commit no .keepalive evita que o GitHub desative o agendamento por inatividade do reposit√≥rio.
+name: keepalive
+on:
+  schedule:
+    - cron: "17 9 */3 * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ping Supabase
+        run: |
+          URL=$(grep -o 'url: "[^"]*"' data/config.js | head -1 | cut -d'"' -f2)
+          KEY=$(grep -o 'anonKey: "[^"]*"' data/config.js | head -1 | cut -d'"' -f2)
+          rpc=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/rest/v1/rpc/r27_ping" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{}')
+          auth=$(curl -s -o /dev/null -w '%{http_code}' "$URL/auth/v1/health" -H "apikey: $KEY")
+          echo "rpc r27_ping: $rpc ¬∑ auth health: $auth"
+          case "$rpc" in 200|404) ;; *) echo "ping falhou"; exit 1;; esac
+      - name: Registrar execu√ß√£o
+        run: |
+          date -u +'%Y-%m-%dT%H:%MZ' > .keepalive
+          git config user.name "rota27-keepalive"
+          git config user.email "actions@users.noreply.github.com"
+          git add .keepalive
+          git commit -m "keepalive $(cat .keepalive)" || exit 0
+          git push

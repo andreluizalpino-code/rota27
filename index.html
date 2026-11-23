@@ -210,6 +210,8 @@ a { color: inherit; }
 .rsel__opt { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 10px; border-radius: var(--r-sm); text-align: left; width: 100%; }
 .rsel__opt:hover, .rsel__opt:focus-visible { background: var(--surface-2); outline: none; }
 .rsel__opt[aria-selected="true"] { background: var(--surface-2); }
+.rsel__grp { padding: 10px 10px 4px; font-size: var(--fs-label); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); }
+.rsel__grp:not(:first-child) { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; }
 .rsel__opt b { font-weight: 700; font-size: var(--fs-sec); }
 .rsel__opt small { display: block; color: var(--ink-3); font-size: var(--fs-label); font-weight: 500; }
 .stats { display: flex; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s2); }
@@ -517,7 +519,7 @@ a { color: inherit; }
   const MODEI = { plane: ['i-plane', 'avião'], train: ['i-train', 'trem'], bus: ['i-bus', 'ônibus'], ferry: ['i-ferry', 'balsa'], car: ['i-car', 'carro'], hike: ['i-hike', 'a pé'] };
   const mIcon = (m, cls) => icon(MODEI[m][0], cls);
   const fmtMin = (m) => { const h = Math.floor(m / 60), mm = m % 60; return h ? `${h}h${String(mm).padStart(2, '0')}` : `${mm} min`; };
-  /* horários do dia: encadeia os trechos a partir das 09:00 com espera antes de embarcar por modo.
+  /* horários do dia: encadeia os trechos a partir das 09:00 (no dia da chegada, 1h depois do pouso) com espera antes de embarcar por modo.
      Um trecho com dep/arr no conteúdo (horário real) trava a cadeia; sem isso, mostra como estimativa. */
   const hm = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
   const fmtHM = (m) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -541,7 +543,8 @@ a { color: inherit; }
   const PALETTE = {
     fogo:     ['#D93B2B', '#F0644F'], epiro:    ['#0E8C7F', '#3FBFAF'], albania:  ['#5A8A16', '#9CCB3D'],
     dalmata:  ['#2F6BE0', '#6B9BFF'], vertical: ['#7A3FE0', '#B08CFF'], egeu:     ['#C77700', '#F2B84B'], jonico: ['#D1367A', '#F27BB0'], licia: ['#B4531B', '#F0915A'],
-    ciclades: ['#0891B2', '#5CD5F2'], salento: ['#7D1D3F', '#E27A98'], zante: ['#15803D', '#4ADE80']
+    ciclades: ['#0891B2', '#5CD5F2'], salento: ['#7D1D3F', '#E27A98'], zante: ['#15803D', '#4ADE80'],
+    lagos: ['#4338CA', '#8E93F5'], alpes: ['#64748B', '#B4C0D3'], riviera: ['#A16207', '#E8C15A'], bota: ['#BE123C', '#F7708D'], sardenha: ['#0284C7', '#5CC4F5'], toscana: ['#854D0E', '#D9A066'], classica: ['#6D28D9', '#A78BFA']
   };
   const STATUS = { recomendado: 'chip--accent', finalista: 'chip--ok', surpresa: 'chip--ok', sobrevivente: '', fria: '', condicional: 'chip--warn' };
 
@@ -550,6 +553,11 @@ a { color: inherit; }
   let map = null, mapReady = false, markers = [], legMarkers = [], labelMarkers = [], runnerM = null, runnerRaf = null, routeId = null, view = 'roteiro', days = [], dayIdx = -1, legIdx = -1;
   const theme = () => load('rota27.theme', 'light');
   const col = (r) => (PALETTE[r.id] || ['#10151C', '#EDEFF2'])[theme() === 'dark' ? 1 : 0];
+  /* cada rota pode entrar por outro aeroporto (meta.entradas): datas, noites e passagem próprias; sem isso vale a meta da viagem */
+  const TRIP = (r) => (r && r.entrada && D.meta.entradas && D.meta.entradas[r.entrada]) ? { ...D.meta, ...D.meta.entradas[r.entrada] } : D.meta;
+  const ENT = (r) => (r && r.entrada) || 'base';
+  const GATE = (r) => { const k = TRIP(r).saida.para.toLowerCase(); return P[k] ? k : 'fco'; };
+  const gateCity = (r) => P[GATE(r)].n.replace(/\s*\(.*\)$/, '');
   const R = () => D.routes.find(r => r.id === routeId);
 
   /* ---------- backends ---------- */
@@ -650,7 +658,7 @@ a { color: inherit; }
 
   /* ---------- linha do tempo (derivada dos dados) ---------- */
   function buildDays(r) {
-    const m = D.meta, out = [];
+    const m = TRIP(r), out = [];
     const dnum = (d) => +d.split('/')[0];
     const wd = (d) => WD[new Date(2027, 6, dnum(d)).getDay()];
     const mk = (o) => ({ bullets: [], moves: [], sides: [], ...o, wd: wd(o.date), d: dnum(o.date) });
@@ -676,7 +684,7 @@ a { color: inherit; }
     });
     const lastStop = r.stops[r.stops.length - 1];
     out.push(mk({ date: m.volta.data, kind: 'back', title: 'Voo de volta', place: lastStop.place, stop: lastStop, si: r.stops.length - 1, moves: legs.slice(li).filter(L => !L.note), desc: `${m.volta.de} ${m.volta.hora} · ${m.volta.cia} ${m.volta.tipo} · ${m.volta.dur}`, bullets: (lastStop.bullets.filter(b => b.startsWith(m.volta.data)).map(b => b.replace(/^\d{2}\/07\s*[—-]\s*/, ''))) }));
-    out.push(mk({ date: m.volta.chega.split(' ')[0], kind: 'home', title: 'Chegada em casa', place: null, desc: `${m.volta.para} ${m.volta.chega.split('· ')[1] || ''}` }));
+    if (m.volta.chega.split(' ')[0] !== m.volta.data) out.push(mk({ date: m.volta.chega.split(' ')[0], kind: 'home', title: 'Chegada em casa', place: null, desc: `${m.volta.para} ${m.volta.chega.split('· ')[1] || ''}` }));
     return out;
   }
 
@@ -777,7 +785,7 @@ a { color: inherit; }
   function setPlaceLabels(keys, color, { side = 'right', route = null } = {}) {
     if (!mapReady) return;
     labelMarkers.forEach(m => m.remove()); labelMarkers = [];
-    const r = route || R(), c = color || col(r), bases = new Set(['fco', ...r.stops.map(s => s.place)]), left = side === 'left';
+    const r = route || R(), c = color || col(r), bases = new Set([GATE(r), ...r.stops.map(s => s.place)]), left = side === 'left';
     [...new Set(keys)].forEach(k => {
       const p = P[k]; if (!p) return;
       const base = bases.has(k), el = document.createElement('div'); el.className = 'wp'; el.style.setProperty('--rc', c);
@@ -809,16 +817,16 @@ a { color: inherit; }
     const c = col(r);
     const goDay = (find) => { if (r.id !== routeId) setRoute(r.id, { keepView: true }); if (view !== 'roteiro') setView('roteiro'); const di = days.findIndex(find); if (di >= 0) selectDay(di, { scroll: true }); };
     const mkEl = (html, cls, title) => { const el = document.createElement('button'); el.type = 'button'; el.className = `pin ${cls}`; el.style.setProperty('--rc', c); el.innerHTML = html; el.setAttribute('aria-label', title); el.title = title; return el; };
-    const g = mkEl(icon('i-plane'), 'pin--gate', 'Roma FCO · entrada e saída');
+    const g = mkEl(icon('i-plane'), 'pin--gate', `${gateCity(r)} ${GATE(r).toUpperCase()} · entrada e saída`);
     g.addEventListener('click', () => goDay(d => d.kind === 'out'));
-    markers.push(new maplibregl.Marker({ element: g }).setLngLat([P.fco.lng, P.fco.lat]).addTo(map));
+    markers.push(new maplibregl.Marker({ element: g }).setLngLat([P[GATE(r)].lng, P[GATE(r)].lat]).addTo(map));
     r.stops.forEach((s, i) => {
       const p = P[s.place], el = mkEl(String(i + 1), '', `${i + 1} · ${s.titulo}`);
       el.addEventListener('click', () => goDay(d => d.si === i));
       markers.push(new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map));
     });
   }
-  function routeBounds(r) { const b = new maplibregl.LngLatBounds(); r.stops.forEach(s => b.extend([P[s.place].lng, P[s.place].lat])); b.extend([P.fco.lng, P.fco.lat]); return b; }
+  function routeBounds(r) { const b = new maplibregl.LngLatBounds(); r.stops.forEach(s => b.extend([P[s.place].lng, P[s.place].lat])); b.extend([P[GATE(r)].lng, P[GATE(r)].lat]); return b; }
   /* o padding de easeTo/fitBounds fica gravado no mapa (MapLibre) e se acumula na chamada seguinte — zera antes de cada enquadramento */
   const ZP = { top: 0, bottom: 0, left: 0, right: 0 };
   const fitB = (b, o) => { map.setPadding(ZP); return map.fitBounds(b, o); };
@@ -857,19 +865,19 @@ a { color: inherit; }
     const d = days[i], r = R(), c = col(r);
     dayIdx = i;
     document.querySelectorAll('.day').forEach(el => el.classList.toggle('is-active', +el.dataset.i === i));
-    const where = d.kind === 'out' ? 'Guarulhos → Roma' : d.kind === 'home' ? 'Chegada em Guarulhos' : d.moves.length ? `${esc(P[d.moves[0].from].n)} → ${esc(d.title)}` : esc(d.title);
+    const where = d.kind === 'out' ? `Guarulhos → ${esc(gateCity(r))}` : d.kind === 'home' ? 'Chegada em Guarulhos' : d.moves.length ? `${esc(P[d.moves[0].from].n)} → ${esc(d.title)}` : esc(d.title);
     $('#routeCard').innerHTML = `<div class="route-card__t"><span class="chip" style="background:${c};color:#fff">D${i}</span>${d.d} ${d.wd} · ${where}</div><div class="route-card__s">${esc(r.nome)}${d.nights && (d.kind === 'arrive' || d.kind === 'move') ? ` · ${d.nights} ${d.nights === 1 ? 'noite' : 'noites'}` : ''}</div>`;
     markers.forEach((m, k) => { const el = m.getElement(); const isGate = k === 0; el.classList.toggle('is-active', isGate ? (d.kind === 'out' || d.kind === 'back' || d.kind === 'home') : (k - 1 === d.si && d.kind !== 'out' && d.kind !== 'home')); });
     if (mapReady) {
       const pad = padding(), dur = reduced ? 0 : 900;
       const ends = (ls) => ls.flatMap(L => [L.from, L.to]);
-      if (d.kind === 'out' || d.kind === 'home') { setActiveLegs([]); setPlaceLabels(['fco']); ease({ center: [P.fco.lng, P.fco.lat], zoom: 5.2, padding: pad, duration: dur }); }
+      if (d.kind === 'out' || d.kind === 'home') { const G = P[GATE(r)]; setActiveLegs([]); setPlaceLabels([GATE(r)]); ease({ center: [G.lng, G.lat], zoom: 5.2, padding: pad, duration: dur }); }
       else if (d.moves.length && d.kind !== 'back') {
         setActiveLegs(d.moves); setPlaceLabels(ends(d.moves));
         const b = new maplibregl.LngLatBounds(); d.moves.forEach(L => legCoords(L).forEach(pt => b.extend(pt))); fitB(b, { padding: pad, duration: dur, maxZoom: 9.5 });
       } else if (d.kind === 'back') {
-        const back = d.moves.length ? d.moves : r.legs.filter(L => L.to === 'roma' && !L.note); setActiveLegs(back); setPlaceLabels(back.length ? ends(back) : [d.place, 'fco']);
-        ease({ center: [P.fco.lng, P.fco.lat], zoom: 6, padding: pad, duration: dur });
+        const back = d.moves.length ? d.moves : r.legs.filter(L => L.to === 'roma' && !L.note); setActiveLegs(back); setPlaceLabels(back.length ? ends(back) : [d.place, GATE(r)]);
+        const G = P[GATE(r)]; ease({ center: [G.lng, G.lat], zoom: 6, padding: pad, duration: dur });
       } else {
         setActiveLegs(d.sides); setPlaceLabels([d.place, ...ends(d.sides)]);
         const p = P[d.place]; ease({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 8.6), padding: pad, duration: dur });
@@ -928,9 +936,9 @@ a { color: inherit; }
   /* ---------- comparar · critérios interativos (hover abre painel sobre o mapa; sair fecha; o painel mantém aberto enquanto o mouse estiver nele) ---------- */
   const CRIT = () => D.crit || window.ROTA27_CRIT || {};
   const critOf = (rid, k) => (CRIT()[rid] || {})[k] || null;
-  const NOITES = () => D.meta.noites, DIAS = () => D.meta.noites + 1;
-  function custoLinhas(c) {
-    const N = NOITES(), Dd = DIAS();
+  const NOITES = (r) => TRIP(r).noites, DIAS = (r) => TRIP(r).noites + 1;
+  function custoLinhas(c, r) {
+    const N = NOITES(r), Dd = DIAS(r);
     return [
       { t: 'Hospedagem', s: `${N} noites · €${c.hosp[0]}–${c.hosp[1]}/noite`, v: [c.hosp[0] * N, c.hosp[1] * N] },
       { t: 'Alimentação', s: `${Dd} dias · €${c.comida[0]}–${c.comida[1]}/dia`, v: [c.comida[0] * Dd, c.comida[1] * Dd] },
@@ -938,9 +946,9 @@ a { color: inherit; }
       { t: 'Deslocamentos', s: 'carro, balsas, trens, ônibus', v: c.desloc },
       { t: 'Atividades', s: 'mergulho, barcos, ingressos', v: c.ativ }];
   }
-  const custoTotal = (c) => custoLinhas(c).reduce((a, l) => [a[0] + l.v[0], a[1] + l.v[1]], [0, 0]);
+  const custoTotal = (c, r) => custoLinhas(c, r).reduce((a, l) => [a[0] + l.v[0], a[1] + l.v[1]], [0, 0]);
   /* o total da tabela é a fonte do "em terra" do orçamento — uma verdade só */
-  function applyCrit() { D.routes.forEach(r => { const c = critOf(r.id, 'custo'); if (c) { const t = custoTotal(c); r.custoEur = [Math.round(t[0] / 10) * 10, Math.round(t[1] / 10) * 10]; } }); }
+  function applyCrit() { D.routes.forEach(r => { const c = critOf(r.id, 'custo'); if (c) { const t = custoTotal(c, r); r.custoEur = [Math.round(t[0] / 10) * 10, Math.round(t[1] / 10) * 10]; } }); }
   let crit = null, critT = null, critCamT = null, critPin = null;   // critPin: critério fixado por clique — sobrevive à saída do mouse
   function frameHTML(rid, q) {
     const g = q.place && !q.texto ? guide(rid, q.place) : null, p = q.place ? P[q.place] : null;
@@ -951,11 +959,11 @@ a { color: inherit; }
     box.querySelectorAll('.frame__img[data-wiki]').forEach(async f => { const w = await wiki(f.dataset.wiki); if (!box.contains(f)) return; const img = f.querySelector('img'); if (w.img) { img.onerror = () => { img.onerror = null; img.src = w.img; }; img.src = bigThumb(w.img); } else f.classList.add('no-img'); f.querySelector('figcaption').innerHTML = `${esc(w.title)} · <a href="${esc(w.url)}" target="_blank" rel="noopener">Wikipédia</a>`; });
   }
   function custoHTML(r, c) {
-    const m = D.meta, k = m.cambio.eurBrl, lines = custoLinhas(c), tot = custoTotal(c), voo = m.passagem.valor;
+    const m = TRIP(r), k = m.cambio.eurBrl, lines = custoLinhas(c, r), tot = custoTotal(c, r), voo = m.passagem.valor;
     const eur = (v) => `€${v[0].toLocaleString('pt-BR')}–${v[1].toLocaleString('pt-BR')}`, brl = (v) => `R$${mil(v[0] * k)}–${mil(v[1] * k)} mil`;
     return `<table class="ctab"><thead><tr><th>Item</th><th class="n">€</th><th class="n">R$</th></tr></thead><tbody>
       ${lines.map(l => `<tr><td>${esc(l.t)}<small>${esc(l.s)}</small></td><td class="n">${eur(l.v)}</td><td class="n">${brl(l.v)}</td></tr>`).join('')}
-      <tr class="tot"><td>Em terra<small>casal · ${NOITES()} noites</small></td><td class="n">${eur(tot)}</td><td class="n">${brl(tot)}</td></tr>
+      <tr class="tot"><td>Em terra<small>casal · ${NOITES(r)} noites</small></td><td class="n">${eur(tot)}</td><td class="n">${brl(tot)}</td></tr>
       <tr><td>Voo internacional<small>${esc(m.saida.de)} ⇄ ${esc(m.saida.para)} · ${esc(m.passagem.classe)}</small></td><td class="n">—</td><td class="n">R$${mil(voo)} mil</td></tr>
       <tr class="tot"><td>Total estimado</td><td class="n"></td><td class="n">R$${mil(voo + tot[0] * k)}–${mil(voo + tot[1] * k)} mil</td></tr>
     </tbody></table>${c.nota ? `<p class="frame__x">${esc(c.nota)}</p>` : ''}<p class="frame__x" style="color:var(--ink-3)">Câmbio ${k.toLocaleString('pt-BR')} · faixas de mercado, não cotação.</p>`;
@@ -1060,6 +1068,11 @@ a { color: inherit; }
     else el.innerHTML = decideHTML();
     wire(r);
   }
+  /* grupos do seletor: uma seção por aeroporto de entrada, na ordem em que aparecem nos dados */
+  function entGroups() {
+    const keys = [...new Set(D.routes.map(ENT))];
+    return keys.map(k => { const r0 = D.routes.find(o => ENT(o) === k), m = TRIP(r0); return { label: `Chegada por ${m.entrada || m.saida.para} · ${m.noites} noites · ${m.saida.de} ⇄ ${m.saida.para}`, routes: D.routes.filter(o => ENT(o) === k) }; });
+  }
   function headerHTML(r) {
     const c = col(r), nights = r.stops.reduce((a, s) => a + s.nights, 0);
     return `<div class="rh">
@@ -1069,7 +1082,7 @@ a { color: inherit; }
           <span class="rsel__txt"><span class="rsel__name">${esc(r.nome)}</span><span class="rsel__sub">${esc(r.sub)}</span></span>
           <svg class="ic rsel__chev"><use href="#i-chev"/></svg>
         </button>
-        <div class="rsel__list" role="listbox" id="rselList" hidden>${D.routes.map(o => `<button class="rsel__opt" role="option" aria-selected="${o.id === r.id}" data-id="${o.id}" type="button"><span class="dot" style="--rc:${col(o)}"></span><span><b>${esc(o.nome)}</b><small>${esc(o.sub)}</small></span><span class="chip ${STATUS[o.status] || ''}" style="margin-left:auto">${esc(o.statusLabel)}</span></button>`).join('')}</div>
+        <div class="rsel__list" role="listbox" id="rselList" hidden>${entGroups().map(g => `<div class="rsel__grp">${esc(g.label)}</div>` + g.routes.map(o => `<button class="rsel__opt" role="option" aria-selected="${o.id === r.id}" data-id="${o.id}" type="button"><span class="dot" style="--rc:${col(o)}"></span><span><b>${esc(o.nome)}</b><small>${esc(o.sub)}</small></span><span class="chip ${STATUS[o.status] || ''}" style="margin-left:auto">${esc(o.statusLabel)}</span></button>`).join('')).join('')}</div>
       </div>
       <div class="stats">
         <div class="stat"><b>${nights}</b><span>noites</span></div>
@@ -1088,10 +1101,10 @@ a { color: inherit; }
         <div class="day__date"><div class="day__num">${d.d}</div><div class="day__wd">${d.wd} · jul</div><span class="day__idx">${i === 0 ? 'D0' : 'D' + i}</span></div>
         <div class="day__body">
           <div class="day__kind">${icon(ic, 'ic ic--s')}${kl}</div>
-          <div class="day__title">${esc(d.title)}${d.kind === 'arrive' ? ` <span class="chip">${esc(D.meta.saida.chega.split('· ')[1])} em ${esc(D.meta.saida.para)}</span>` : ''}${d.nights && (d.kind === 'arrive' || d.kind === 'move') ? ` <span class="chip ${anchor ? 'chip--ok' : ''}">${d.nights} ${d.nights === 1 ? 'noite' : 'noites'}${anchor ? ' · âncora' : ''}</span>` : ''}</div>
-          ${d.kind === 'out' ? flightRow(D.meta.saida) : d.kind === 'home' ? `<div class="move__c" style="margin-top:6px">${esc(d.desc)}</div>` : ''}
-          ${d.moves.length ? (() => { const sc = schedule(d.moves); return `<div class="moves">${d.moves.map((L, k) => moveRow(L, k + 1, sc[k])).join('')}${sc.est ? `<div class="moves__note">horários estimados a partir das 09:00 · confirmar ao comprar</div>` : ''}</div>`; })() : ''}
-          ${d.kind === 'back' ? flightRow(D.meta.volta) : ''}
+          <div class="day__title">${esc(d.title)}${d.kind === 'arrive' ? ` <span class="chip">${esc(TRIP(r).saida.chega.split('· ')[1])} em ${esc(TRIP(r).saida.para)}</span>` : ''}${d.nights && (d.kind === 'arrive' || d.kind === 'move') ? ` <span class="chip ${anchor ? 'chip--ok' : ''}">${d.nights} ${d.nights === 1 ? 'noite' : 'noites'}${anchor ? ' · âncora' : ''}</span>` : ''}</div>
+          ${d.kind === 'out' ? flightRow(TRIP(r).saida) : d.kind === 'home' ? `<div class="move__c" style="margin-top:6px">${esc(d.desc)}</div>` : ''}
+          ${d.moves.length ? (() => { const t0 = d.kind === 'arrive' ? Math.max(9 * 60, hm(TRIP(r).saida.chega.split('· ')[1]) + 60) : 9 * 60, sc = schedule(d.moves, t0); return `<div class="moves">${d.moves.map((L, k) => moveRow(L, k + 1, sc[k])).join('')}${sc.est ? `<div class="moves__note">horários estimados a partir das ${fmtHM(t0)} · confirmar ao comprar</div>` : ''}</div>`; })() : ''}
+          ${d.kind === 'back' ? flightRow(TRIP(r).volta) : ''}
           ${d.sides.length ? `<div class="moves">${d.sides.map(L => moveRow(L, '', null, true)).join('')}</div>` : ''}
           ${d.stop && (d.kind === 'arrive' || d.kind === 'move') && guide(r.id, d.place) ? guideHTML(guide(r.id, d.place), d) : ''}
           ${d.bullets.length ? `<ul>${d.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}
@@ -1105,10 +1118,10 @@ a { color: inherit; }
     return `<div class="legs" style="--rc:${col(r)}"><div class="stats" style="margin:4px 0 8px"><div class="stat"><b>${main.length}</b><span>trechos</span></div><div class="stat"><b>${fmtMin(total)}</b><span>em trânsito</span></div><div class="stat"><b>${Object.keys(by).map(m => `${by[m]}<span style="display:inline-flex;vertical-align:-2px;margin:0 6px 0 2px">${mIcon(m, 'ic ic--s')}</span>`).join('')}</b><span>por modo</span></div></div>` +
       r.legs.map((L, i) => `<div class="legrow ${i === legIdx ? 'is-active' : ''}" data-leg="${i}" role="button" tabindex="0"><span class="legrow__n mono">${i + 1}</span><span class="move__ic">${mIcon(L.mode, 'ic')}</span><div><div class="legrow__t">${esc(P[L.from].n)} → ${esc(P[L.to].n)}${L.note ? ` <span class="chip">${esc(L.note)}</span>` : ''}</div><div class="legrow__c"><b>${MODEI[L.mode][1]}</b> · ${esc(L.carrier || '—')}${L.alt ? ' · ' + esc(L.alt) : ''}</div></div><div class="legrow__d">${fmtMin(L.min)}</div></div>`).join('') + `</div>`;
   }
-  const PAIS = { IT: 'Itália', MT: 'Malta', TR: 'Turquia', GR: 'Grécia', AL: 'Albânia', HR: 'Croácia', SI: 'Eslovênia', ME: 'Montenegro' };
+  const PAIS = { IT: 'Itália', MT: 'Malta', TR: 'Turquia', GR: 'Grécia', AL: 'Albânia', HR: 'Croácia', SI: 'Eslovênia', ME: 'Montenegro', CH: 'Suíça', MC: 'Mônaco' };
   const mil = (v) => (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
   function budgetHTML(r) {
-    const m = D.meta, k = m.cambio.eurBrl, voo = m.passagem.valor, terra = [r.custoEur[0] * k, r.custoEur[1] * k], tot = [voo + terra[0], voo + terra[1]];
+    const m = TRIP(r), k = m.cambio.eurBrl, voo = m.passagem.valor, terra = [r.custoEur[0] * k, r.custoEur[1] * k], tot = [voo + terra[0], voo + terra[1]];
     const { base, teto } = m.orcamento;
     const v = tot[1] <= base ? ['is-ok', `dentro do orçamento de R$${mil(base)} mil`] : tot[1] <= teto ? ['is-ok', `usa a margem · teto R$${mil(teto)} mil`] : tot[0] <= teto ? ['is-warn', `faixa alta passa do teto de R$${mil(teto)} mil`] : ['is-neg', `acima do teto de R$${mil(teto)} mil`];
     return `<div class="budget"><div class="budget__t">Orçamento estimado · 2 pessoas</div>
@@ -1159,9 +1172,9 @@ a { color: inherit; }
     return { N, people, byUser, rows, pending, mine: byUser[u.id] };
   }
   function decideHTML() {
-    const u = me(), st = decStats(), k = D.meta.cambio.eurBrl, voo = D.meta.passagem.valor;
+    const u = me(), st = decStats(), k = D.meta.cambio.eurBrl;
     const ord = (p) => p ? `${p}º` : '—';
-    const custo = (r) => `R$${mil(voo + r.custoEur[0] * k)}–${mil(voo + r.custoEur[1] * k)} mil`;
+    const custo = (r) => { const voo = TRIP(r).passagem.valor; return `R$${mil(voo + r.custoEur[0] * k)}–${mil(voo + r.custoEur[1] * k)} mil`; };
     const podium = st.rows.slice(0, 3).map((x, i) => `<div class="pod pod--${i + 1}" style="--rc:${col(x.r)}"><div class="pod__n">${i + 1}º · ${x.total} pts</div><div class="pod__t">${esc(x.r.nome)}</div><div class="pod__who">${x.per.map(y => `${esc(y.p.initial)} ${ord(y.pos)} · ♥${y.h}`).join('<br>')}</div></div>`).join('');
     const wait = st.pending.length ? `<div class="dec__wait">Aguardando a ordem de: ${st.pending.map(p => esc(p.display_name)).join(', ')}</div>` : '';
     const myOrder = Object.keys(st.mine.pos).length ? [...D.routes].sort((a, b) => (st.mine.pos[a.id] || 99) - (st.mine.pos[b.id] || 99)).map(r => r.id) : defaultOrder();

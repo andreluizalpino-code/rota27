@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Gera data/geo.js: traçado real por estrada (OSRM) para os trechos de carro, ônibus e trem de todas as rotas.
+// Trechos com `geo: false` (trens de cremalheira, sem estrada) ficam em linha reta.
 // Uso: node data/build-geo.mjs   (só busca pares que ainda não existem; apague data/geo.js para refazer tudo)
 import { readFile, writeFile } from 'node:fs/promises';
 import vm from 'node:vm';
@@ -9,7 +10,7 @@ const D = (await evalWindow('routes.js')).ROTA27, P = D.places;
 const geo = (await evalWindow('geo.js')).ROTA27_GEO || {};
 const LAND = new Set(['car', 'bus', 'train']);
 const pairs = new Map();
-D.routes.forEach(r => r.legs.forEach(L => { if (LAND.has(L.mode) && P[L.from] && P[L.to]) pairs.set(`${L.from}>${L.to}`, L); }));
+D.routes.forEach(r => r.legs.forEach(L => { if (LAND.has(L.mode) && L.geo !== false && P[L.from] && P[L.to]) pairs.set(`${L.from}>${L.to}`, L); }));
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 // simplificação Douglas-Peucker em graus (0.004° ≈ 400 m) — suficiente para o zoom regional
 const dp = (pts, tol) => {
